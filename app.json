@@ -8,7 +8,7 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "ch.mohamadba.rhmasterch",
+      "bundleIdentifier": "com.vibecode.rhmasterch-yqj32g",
       "buildNumber": "1",
       "config": {
         "usesNonExemptEncryption": false
