@@ -6,7 +6,7 @@
 |---|---|
 | Nom (≤ 30) | RH Master CH: droit du travail (30 car.) |
 | Sous-titre (≤ 30) | Droit du travail suisse (23 car.) |
-| Bundle ID | `ch.mohamadba.rhmasterch` |
+| Bundle ID | `com.vibecode.rhmasterch-yqj32g` |
 | SKU proposé | `rh-master-ch-ios-001` |
 | Projet EAS | `39c8cdc7-9a26-42d3-b971-15a635950a11` (compte habib548) |
 | Version / build | 1.0.0 / numéro de build géré par EAS (remote, autoIncrement) |
