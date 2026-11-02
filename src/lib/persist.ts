@@ -2,6 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
 
 export type HydrationPhase = 'pending' | 'ready' | 'timedOut';
+export type ResetPhase = 'idle' | 'pending' | 'done';
+
+export type DataStatus = {
+  unreadable: boolean;
+  rawBackup: string | null;
+  resetPhase: ResetPhase;
+};
 
 export type PersistStorage = {
   getItem(key: string): Promise<string | null>;
@@ -39,7 +46,10 @@ export function createPersistedStore<T extends object>(
   /** getItem encore en cours pour cette génération. 0 = aucun. */
   let inflightGeneration = 0;
   let unreadable = false;
+  let rawBackup: string | null = null;
+  let resetPhase: ResetPhase = 'idle';
   let pendingReset = false;
+  let dataStatus: DataStatus = { unreadable: false, rawBackup: null, resetPhase: 'idle' };
   let pendingPatches: Patch<T>[] = [];
   let timer: ReturnType<typeof setTimeout> | null = null;
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -48,6 +58,17 @@ export function createPersistedStore<T extends object>(
   const emit = () => listeners.forEach((l) => l());
 
   const canWrite = () => fulfilledGeneration === generation && !unreadable;
+
+  const syncStatus = () => {
+    if (
+      dataStatus.unreadable === unreadable &&
+      dataStatus.rawBackup === rawBackup &&
+      dataStatus.resetPhase === resetPhase
+    ) {
+      return;
+    }
+    dataStatus = { unreadable, rawBackup, resetPhase };
+  };
 
   const clearHydrationTimer = () => {
     if (timer) {
@@ -90,10 +111,14 @@ export function createPersistedStore<T extends object>(
     }, SAVE_DELAY_MS);
   };
 
-  const scheduleRemove = () => {
+  const scheduleRemove = (after?: () => void) => {
     if (!canWrite()) return;
     clearSaveTimer();
-    enqueueWrite(() => storage.removeItem(key));
+    enqueueWrite(() =>
+      storage.removeItem(key).then(() => {
+        after?.();
+      }),
+    );
   };
 
   const parseStored = (raw: string | null): { ok: true; value: Partial<T> } | { ok: false } => {
@@ -111,7 +136,6 @@ export function createPersistedStore<T extends object>(
     const my = ++generation;
     inflightGeneration = my;
     phase = 'pending';
-    unreadable = false;
     if (!keepReset) {
       pendingReset = false;
       pendingPatches = [];
@@ -138,7 +162,13 @@ export function createPersistedStore<T extends object>(
       unreadable = false;
       phase = 'ready';
       // Suppression explicite : removeItem, jamais un setItem de l'état vide.
-      scheduleRemove();
+      resetPhase = 'pending';
+      syncStatus();
+      scheduleRemove(() => {
+        resetPhase = 'done';
+        syncStatus();
+        emit();
+      });
       if (patches.length > 0) schedulePersist();
       emit();
     };
@@ -151,23 +181,31 @@ export function createPersistedStore<T extends object>(
         clearHydrationTimer();
         const parsed = parseStored(raw);
         const patches = pendingPatches;
+        if (!parsed.ok) {
+          // Copie brute conservée. Aucun setItem ni removeItem.
+          rawBackup = raw ?? '';
+          unreadable = true;
+          pendingReset = false;
+          resetPhase = 'idle';
+          phase = 'ready';
+          syncStatus();
+          emit();
+          return;
+        }
+        rawBackup = null;
+        unreadable = false;
         if (pendingReset) {
           applyReset(patches);
           return;
         }
-        if (!parsed.ok) {
-          fulfilledGeneration = my;
-          unreadable = true;
-          phase = 'ready';
-          emit();
-          return;
-        }
+        if (resetPhase === 'pending') resetPhase = 'idle';
         pendingPatches = [];
         state = { ...initial, ...parsed.value };
         for (const patch of patches) state = applyPatch(state, patch);
         fulfilledGeneration = my;
         unreadable = false;
         phase = 'ready';
+        syncStatus();
         emit();
         if (patches.length > 0) schedulePersist();
       })
@@ -197,18 +235,35 @@ export function createPersistedStore<T extends object>(
     },
     reset() {
       clearSaveTimer();
+      if (unreadable) {
+        resetPhase = 'idle';
+        syncStatus();
+        emit();
+        return;
+      }
       state = initial;
       pendingPatches = [];
-      emit();
-      if (canWrite() || (fulfilledGeneration === generation && unreadable)) {
+      if (canWrite()) {
         pendingReset = false;
-        unreadable = false;
-        scheduleRemove();
+        resetPhase = 'pending';
+        syncStatus();
+        emit();
+        scheduleRemove(() => {
+          resetPhase = 'done';
+          syncStatus();
+          emit();
+        });
         return;
       }
       pendingReset = true;
+      resetPhase = 'pending';
+      syncStatus();
+      emit();
       if (inflightGeneration !== generation) hydrate(true);
     },
+    isUnreadable: () => unreadable,
+    getRawBackup: () => rawBackup,
+    getResetPhase: () => resetPhase,
     /** Relance la lecture. Annule toute écriture encore armée. N'écrit rien. */
     retryHydration() {
       hydrate(pendingReset);
@@ -230,6 +285,9 @@ export function createPersistedStore<T extends object>(
     },
     usePhase(): HydrationPhase {
       return useSyncExternalStore(subscribe, () => phase, () => phase);
+    },
+    useDataStatus(): DataStatus {
+      return useSyncExternalStore(subscribe, () => dataStatus, () => dataStatus);
     },
   };
 }

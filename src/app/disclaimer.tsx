@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import React from 'react';
 import { SourcesList } from '../components/Disclaimer';
 import { Badge, Body, Button, Card, H1, H2, Muted, Row, Screen } from '../components/ui';
-import { FEATURE_AI } from '../lib/flags';
+import { aiOptionalServiceDown } from '../lib/flags';
 import { useI18n } from '../lib/i18n';
 import { appStore } from '../lib/store';
 
@@ -25,7 +25,7 @@ export default function Disclaimer() {
       </Card>
       <Card>
         <H2>{t('aiNotice')}</H2>
-        {FEATURE_AI ? null : <Badge label={t('optionalServiceDown')} tone="warn" />}
+        {aiOptionalServiceDown() ? <Badge label={t('optionalServiceDown')} tone="warn" /> : null}
         <Muted>{t('aiNoticeText')}</Muted>
       </Card>
       <Card>

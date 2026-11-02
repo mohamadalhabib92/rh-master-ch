@@ -102,10 +102,12 @@ test('reset before a successful read never writes the empty state', async () => 
     store.set({ extra: 9 });
     store.reset();
     store.set({ lang: 'it' });
+    assert.equal(store.getResetPhase(), 'pending');
     mock.timers.tick(10_000);
     await drain();
     assert.equal(sets.length, 0);
     assert.equal(removes.n, 0);
+    assert.equal(store.getResetPhase(), 'pending');
 
     pending[0].resolve(JSON.stringify(saved));
     await drain();
@@ -116,6 +118,35 @@ test('reset before a successful read never writes the empty state', async () => 
     assert.deepEqual(JSON.parse(sets[0]), { lang: 'it', progress: {}, extra: 0 });
     assert.deepEqual(store.get().progress, {});
     assert.equal(store.get().lang, 'it');
+    assert.equal(store.getResetPhase(), 'done');
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test('unreadable JSON is kept as a raw export and never written back', async () => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    const raw = '{"lang":';
+    const { storage, pending, sets, removes } = fakeStorage();
+    const store = createPersistedStore('rhmaster:v1', initial, 8000, storage);
+    store.continueOffline();
+    store.reset();
+    assert.equal(store.getResetPhase(), 'pending');
+    pending[0].resolve(raw);
+    await drain();
+    mock.timers.tick(10_000);
+    await drain();
+    store.set({ extra: 3 });
+    store.reset();
+    store.set({ lang: 'it' });
+    mock.timers.tick(10_000);
+    await drain();
+    assert.equal(sets.length, 0);
+    assert.equal(removes.n, 0);
+    assert.equal(store.isUnreadable(), true);
+    assert.equal(store.getRawBackup(), raw);
+    assert.equal(store.getResetPhase(), 'idle');
   } finally {
     mock.timers.reset();
   }

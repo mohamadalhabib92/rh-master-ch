@@ -11,6 +11,14 @@ function envFlag(value: string | undefined, fallback: boolean): boolean {
 }
 
 export const FEATURE_AI = envFlag(process.env.EXPO_PUBLIC_FEATURE_AI, false);
+
+/**
+ * Apple 2.1 : un service simplement désactivé n'affiche pas d'erreur.
+ * Le badge n'apparaît que si l'IA est demandée et ne peut pas répondre.
+ */
+export function aiOptionalServiceDown(): boolean {
+  return FEATURE_AI;
+}
 export const FEATURE_NEWS = envFlag(process.env.EXPO_PUBLIC_FEATURE_NEWS, false);
 export const FEATURE_ACCOUNT = envFlag(process.env.EXPO_PUBLIC_FEATURE_ACCOUNT, false);
 

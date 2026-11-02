@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { DisclaimerBanner, SourcesList } from '../../components/Disclaimer';
+import { RawBackupNotice } from '../../components/RawBackupNotice';
 import { ModuleCard } from '../../components/ModuleCard';
 import { Badge, Body, Button, Card, H1, H2, Muted, ProgressBar, Row, Screen } from '../../components/ui';
 import { NEWS } from '../../data/news';
@@ -39,6 +40,7 @@ export default function Home() {
         />
       </View>
       <DisclaimerBanner />
+      <RawBackupNotice />
       <Card>
         <Row style={{ justifyContent: 'space-between' }}>
           <H2>{t('overallProgress')}</H2>
