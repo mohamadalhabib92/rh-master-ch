@@ -27,10 +27,10 @@ export default function Settings() {
         </Row>
         {lang !== 'fr' ? <Muted>{t('provisional')}</Muted> : null}
       </Card>
+      <RawBackupNotice />
       <Card>
         <H2>{t('dataLocal')}</H2>
         <Muted>{t('dataLocalText')}</Muted>
-        <RawBackupNotice />
         {resetPhase === 'done' ? <Body color={colors.ok}>{t('resetDone')}</Body> : null}
         {resetPhase === 'pending' ? <Body>{t('resetPending')}</Body> : null}
         {confirm ? (
