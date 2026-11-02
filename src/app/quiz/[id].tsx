@@ -109,8 +109,9 @@ export default function Quiz() {
   return (
     <Screen>
       <BackBar label={t('backToModule')} />
-      <Row style={{ justifyContent: 'space-between' }}>
+      <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <Muted>{t('questionOf', { n: idx + 1, t: deck.length })}</Muted>
+        <Badge label={q.status === 'valide' ? t('statusValidated') : t('questionPending')} tone={q.status === 'valide' ? 'ok' : 'warn'} />
         {lang !== 'fr' ? <Badge label={fallback ? 'FR' : t('provisional')} tone="warn" /> : null}
       </Row>
       <ProgressBar value={(idx + (checked ? 1 : 0)) / deck.length} />
@@ -133,7 +134,7 @@ export default function Quiz() {
               <Ionicons
                 name={right ? 'checkmark-circle' : wrong ? 'close-circle' : chosen ? 'radio-button-on' : 'radio-button-off'}
                 size={20}
-                color={right ? colors.ok : wrong ? colors.danger : chosen ? colors.primary : colors.muted}
+                color={right ? colors.ok : wrong ? colors.danger : chosen ? colors.primaryText : colors.muted}
               />
               <Text style={styles.optText}>{text.o[oi]}</Text>
             </Pressable>
@@ -148,8 +149,9 @@ export default function Quiz() {
           <Body style={{ fontWeight: '700' }}>{t('explanation')}</Body>
           <Body>{text.e}</Body>
           <Muted>
-            {t('reference')} : {q.law} — {LAWS[q.law]?.[lang] ?? LAWS[q.law]?.fr ?? ''}
+            {t('reference')} : {q.law} — {LAWS[q.law]?.[lang] ?? LAWS[q.law]?.fr ?? q.source ?? 'YOUR_LEGAL_SOURCE'}
           </Muted>
+          {q.source?.startsWith('YOUR_') ? <Muted>{t('rateSource')} : {q.source}</Muted> : null}
         </Card>
       ) : null}
       {checked ? (

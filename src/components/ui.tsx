@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
+  AccessibilityInfo,
   Animated,
   GestureResponderEvent,
   LayoutChangeEvent,
@@ -15,7 +15,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, radius, space } from '../theme';
+import { colors, hit, radius, space } from '../theme';
 
 export function Screen({
   children,
@@ -116,7 +116,7 @@ export function Button({
         : variant === 'danger'
           ? colors.danger
           : 'transparent';
-  const fg = variant === 'primary' || variant === 'danger' ? colors.onPrimary : colors.primary;
+  const fg = variant === 'primary' || variant === 'danger' ? colors.onPrimary : colors.primaryText;
   return (
     <Pressable
       accessibilityRole="button"
@@ -125,7 +125,7 @@ export function Button({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        small && { minHeight: 36, paddingHorizontal: space.md },
+        small && { paddingHorizontal: space.md },
         { backgroundColor: bg, opacity: disabled ? 0.45 : pressed ? 0.85 : 1 },
         variant === 'ghost' && { borderWidth: 1, borderColor: colors.border },
         style,
@@ -166,7 +166,7 @@ export function Badge({ label, tone = 'neutral' }: { label: string; tone?: 'neut
     neutral: [colors.surfaceAlt, colors.muted],
     warn: ['#FFF4DB', '#8A5A00'],
     ok: ['#E3F6EA', '#1D6B3A'],
-    info: [colors.primarySoft, colors.primary],
+    info: [colors.primarySoft, colors.primaryText],
   } as const;
   const [bg, fg] = map[tone];
   return (
@@ -258,18 +258,38 @@ export function Slider({
 }
 
 export function Skeleton({ height = 18, width = '100%', style }: { height?: number; width?: number | `${number}%`; style?: StyleProp<ViewStyle> }) {
-  const a = useRef(new Animated.Value(0.4)).current;
+  const a = useRef(new Animated.Value(0.55)).current;
+  const [reduced, setReduced] = useState(false);
   useEffect(() => {
+    let alive = true;
+    let sub: { remove?: () => void } | undefined;
+    try {
+      void Promise.resolve(AccessibilityInfo.isReduceMotionEnabled())
+        .then((value) => {
+          if (alive) setReduced(Boolean(value));
+        })
+        .catch(() => undefined);
+      sub = AccessibilityInfo.addEventListener('reduceMotionChanged', (value) => setReduced(Boolean(value)));
+    } catch {
+      // Réglage indisponible : le squelette reste statique.
+    }
+    return () => {
+      alive = false;
+      sub?.remove?.();
+    };
+  }, []);
+  useEffect(() => {
+    if (reduced) return;
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(a, { toValue: 1, duration: 700, useNativeDriver: false }),
-        Animated.timing(a, { toValue: 0.4, duration: 700, useNativeDriver: false }),
+        Animated.timing(a, { toValue: 0.55, duration: 700, useNativeDriver: false }),
       ]),
     );
     loop.start();
     return () => loop.stop();
-  }, [a]);
-  return <Animated.View style={[{ height, width, borderRadius: 8, backgroundColor: colors.surfaceAlt, opacity: a }, style]} />;
+  }, [a, reduced]);
+  return <Animated.View style={[{ height, width, borderRadius: 8, backgroundColor: colors.surfaceAlt, opacity: reduced ? 1 : a }, style]} />;
 }
 
 export function EmptyState({ icon, title, text, action }: { icon?: React.ReactNode; title: string; text?: string; action?: React.ReactNode }) {
@@ -291,11 +311,13 @@ export function Spacer({ h = space.md }: { h?: number }) {
   return <View style={{ height: h }} />;
 }
 
+/** @deprecated Préférer BootGate (squelettes + repli). Conservé pour ne pas retirer de composant. */
 export function BootScreen({ label }: { label: string }) {
   return (
-    <View style={[styles.screen, { alignItems: 'center', justifyContent: 'center', gap: 12 }]}>
-      <ActivityIndicator color={colors.primary} />
-      <Muted>{label}</Muted>
+    <View accessibilityLabel={label} style={[styles.screen, { alignItems: 'center', justifyContent: 'center', gap: 12, padding: space.lg }]}>
+      <Skeleton height={132} />
+      <Skeleton height={44} width="70%" />
+      <Skeleton height={84} />
     </View>
   );
 }
@@ -318,7 +340,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   button: {
-    minHeight: 46,
+    minHeight: hit,
     paddingHorizontal: space.lg,
     borderRadius: radius.md,
     alignItems: 'center',
@@ -328,7 +350,7 @@ const styles = StyleSheet.create({
   },
   buttonText: { fontSize: 15, fontWeight: '700' },
   chip: {
-    minHeight: 36,
+    minHeight: hit,
     paddingHorizontal: 14,
     borderRadius: 999,
     borderWidth: 1,
