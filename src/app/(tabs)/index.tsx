@@ -3,9 +3,12 @@ import { router } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { DisclaimerBanner, SourcesList } from '../../components/Disclaimer';
+import { RawBackupNotice } from '../../components/RawBackupNotice';
 import { ModuleCard } from '../../components/ModuleCard';
 import { Badge, Body, Button, Card, H1, H2, Muted, ProgressBar, Row, Screen } from '../../components/ui';
+import { NEWS } from '../../data/news';
 import { MODULES, findModule } from '../../data/modules';
+import { FEATURE_NEWS } from '../../lib/flags';
 import { useI18n } from '../../lib/i18n';
 import { appStore } from '../../lib/store';
 import { colors, radius, space } from '../../theme';
@@ -32,11 +35,12 @@ export default function Home() {
           label={done > 0 ? t('continueStudy') : t('startStudy')}
           variant="secondary"
           onPress={() => router.push(`/module/${next.id}`)}
-          icon={<Ionicons name="play" size={16} color={colors.primary} />}
+          icon={<Ionicons name="play" size={16} color={colors.primaryText} />}
           style={{ alignSelf: 'flex-start', marginTop: 4 }}
         />
       </View>
       <DisclaimerBanner />
+      <RawBackupNotice />
       <Card>
         <Row style={{ justifyContent: 'space-between' }}>
           <H2>{t('overallProgress')}</H2>
@@ -48,13 +52,27 @@ export default function Home() {
         </Muted>
       </Card>
       {last ? <ModuleCard m={last} /> : null}
-      <Card>
-        <Row style={{ justifyContent: 'space-between' }}>
+      {FEATURE_NEWS && NEWS.length > 0 ? (
+        <Card>
           <H2>{t('news')}</H2>
-          <Badge label={t('newsComing')} tone="warn" />
-        </Row>
-        <Muted>{t('newsComingText')}</Muted>
-      </Card>
+          {NEWS.map((item) => (
+            <View key={item.id} style={{ gap: 2 }}>
+              <Body>{item.title}</Body>
+              <Muted>
+                {item.date} — {item.source}
+              </Muted>
+            </View>
+          ))}
+        </Card>
+      ) : (
+        <Card>
+          <Row style={{ justifyContent: 'space-between' }}>
+            <H2>{t('news')}</H2>
+            <Badge label={t('newsComing')} tone="warn" />
+          </Row>
+          <Muted>{t('newsComingText')}</Muted>
+        </Card>
+      )}
       <Card>
         <SourcesList />
       </Card>

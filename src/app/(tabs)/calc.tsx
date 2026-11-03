@@ -1,12 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { DisclaimerBanner } from '../../components/Disclaimer';
 import { Field } from '../../components/Field';
-import { Body, Card, Chip, H1, H2, H3, Muted, Row, Screen } from '../../components/ui';
-import { chf, DEFAULT_RATES, fmtDate, net, noticeEnd, overtime, parseDate, parseNum, protectionDays, seniorityYears, vacation } from '../../lib/calc';
+import { Badge, Body, Card, Chip, H1, H2, H3, Muted, Row, Screen } from '../../components/ui';
+import { chf, formatChDate, fmtDate, net, noticeEnd, overtime, parseDate, parseNum, protectionDays, RATE_PARAMS, rateById, seniorityYears, vacation, type RateParam } from '../../lib/calc';
 import { useI18n } from '../../lib/i18n';
-import { colors, radius } from '../../theme';
+import { colors, hit, radius } from '../../theme';
 
 type Tab = 'net' | 'vac' | 'ot' | 'notice' | 'prot';
 
@@ -28,29 +28,99 @@ const num = (s: string, min = 0, max = Number.MAX_SAFE_INTEGER) => {
   return n === null || n < min || n > max ? null : n;
 };
 
+/** null = champ vide (non sourcé, exclu du calcul). undefined = saisie invalide. */
+const optionalRate = (s: string, max: number): number | null | undefined => {
+  if (!s.trim()) return null;
+  const n = num(s, 0, max);
+  return n === null ? undefined : n;
+};
+
+const RATE_LABEL = {
+  avs_ai_apg_employee: 'rateAvsEmployee',
+  avs_ai_apg_employer: 'rateAvsEmployer',
+  ac_employee: 'rateAcEmployee',
+  ac_employer: 'rateAcEmployer',
+  ac_ceiling: 'rateAcCeiling',
+  lpp_entry: 'rateLppEntry',
+  lpp_coordination: 'rateLppCoordination',
+  lpp_max_salary: 'rateLppMax',
+  aanp: 'rateAanpParam',
+  lpp_employee: 'rateLppEmployee',
+  laa: 'rateLaa',
+  ijm: 'rateIjm',
+  family_allowance: 'rateFamily',
+  lpp_age: 'rateLppAge',
+} as const;
+
+function formatParam(p: RateParam, missing: string): string {
+  if (p.value === null) return missing;
+  return p.unit === 'percent' ? `${p.value} %` : chf(p.value);
+}
+
+function RateParams() {
+  const { t } = useI18n();
+  return (
+    <Card>
+      <H2>{t('rateParamsTitle')}</H2>
+      <Muted>{t('rateParamsIntro')}</Muted>
+      {RATE_PARAMS.map((p) => {
+        const labelKey = RATE_LABEL[p.id as keyof typeof RATE_LABEL];
+        const label = labelKey ? t(labelKey) : p.id;
+        const sourced = p.status === 'a_confirmer' && p.value !== null;
+        return (
+          <View key={p.id} style={styles.param}>
+            <Row style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <Body style={{ flex: 1 }}>{label}</Body>
+              <Badge label={sourced ? t('statusToConfirm') : t('statusToValidate')} tone="warn" />
+            </Row>
+            <H3>{formatParam(p, t('rateMissing'))}</H3>
+            <Muted>
+              {t('rateSource')} : {p.source}
+              {p.consultedAt ? ` — ${t('rateConsulted', { d: formatChDate(p.consultedAt) })}` : ` — ${t('rateNoDate')}`}
+            </Muted>
+            {p.kind === 'employer' ? <Muted>{t('rateEmployerNote')}</Muted> : null}
+            {p.kind === 'threshold' ? <Muted>{t('rateThresholdNote')}</Muted> : null}
+            {p.sourceUrl.startsWith('http') ? (
+              <Pressable accessibilityRole="link" onPress={() => Linking.openURL(p.sourceUrl).catch(() => undefined)}>
+                <Text style={styles.link}>{p.sourceUrl}</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        );
+      })}
+    </Card>
+  );
+}
+
 function NetCalc() {
   const { t } = useI18n();
   const [g, setG] = useState('6500');
-  const [avs, setAvs] = useState(String(DEFAULT_RATES.avs));
-  const [ac, setAc] = useState(String(DEFAULT_RATES.ac));
-  const [aanp, setAanp] = useState(String(DEFAULT_RATES.aanp));
-  const [lpp, setLpp] = useState(String(DEFAULT_RATES.lpp));
-  const [ceil, setCeil] = useState(String(DEFAULT_RATES.acCeiling));
-  const v = { g: num(g), avs: num(avs, 0, 30), ac: num(ac, 0, 10), aanp: num(aanp, 0, 10), lpp: num(lpp, 0, 30), ceil: num(ceil) };
-  const ok = Object.values(v).every((x) => x !== null);
-  const r = ok ? net(v.g!, { avs: v.avs!, ac: v.ac!, aanp: v.aanp!, lpp: v.lpp!, acCeiling: v.ceil! }) : null;
+  const [avs, setAvs] = useState(String(rateById('avs_ai_apg_employee').value ?? ''));
+  const [ac, setAc] = useState(String(rateById('ac_employee').value ?? ''));
+  const [aanp, setAanp] = useState('');
+  const [lpp, setLpp] = useState('');
+  const [ceil, setCeil] = useState(String(rateById('ac_ceiling').value ?? ''));
+  const aanpV = optionalRate(aanp, 10);
+  const lppV = optionalRate(lpp, 30);
+  const v = { g: num(g), avs: num(avs, 0, 30), ac: num(ac, 0, 10), ceil: num(ceil) };
+  const ok = v.g !== null && v.avs !== null && v.ac !== null && v.ceil !== null && aanpV !== undefined && lppV !== undefined;
+  const r = ok ? net(v.g!, { avs: v.avs!, ac: v.ac!, aanp: aanpV, lpp: lppV, acCeiling: v.ceil! }) : null;
   const e = (x: number | null) => (x === null ? t('invalidNumber') : null);
-  const ind = t('indicativeValue');
+  const sourced = (id: string) => {
+    const p = rateById(id);
+    const date = p.consultedAt ? t('rateConsulted', { d: formatChDate(p.consultedAt) }) : t('rateNoDate');
+    return `${t('statusToConfirm')} — ${p.source}, ${date}`;
+  };
   return (
     <Card>
       <H2>{t('netCalc')}</H2>
       <View style={styles.grid}>
         <Field label={t('grossMonthly')} value={g} onChange={setG} error={e(v.g)} />
-        <Field label={t('rateAvs')} value={avs} onChange={setAvs} error={e(v.avs)} hint={ind} />
-        <Field label={t('rateAc')} value={ac} onChange={setAc} error={e(v.ac)} hint={ind} />
-        <Field label={t('acCeiling')} value={ceil} onChange={setCeil} error={e(v.ceil)} hint={ind} />
-        <Field label={t('rateAanp')} value={aanp} onChange={setAanp} error={e(v.aanp)} hint={ind} />
-        <Field label={t('rateLpp')} value={lpp} onChange={setLpp} error={e(v.lpp)} hint={ind} />
+        <Field label={t('rateAvs')} value={avs} onChange={setAvs} error={e(v.avs)} hint={sourced('avs_ai_apg_employee')} />
+        <Field label={t('rateAc')} value={ac} onChange={setAc} error={e(v.ac)} hint={sourced('ac_employee')} />
+        <Field label={t('acCeiling')} value={ceil} onChange={setCeil} error={e(v.ceil)} hint={sourced('ac_ceiling')} />
+        <Field label={t('rateAanp')} value={aanp} onChange={setAanp} error={aanpV === undefined ? t('invalidNumber') : null} hint={t('rateManual')} />
+        <Field label={t('rateLpp')} value={lpp} onChange={setLpp} error={lppV === undefined ? t('invalidNumber') : null} hint={t('rateManual')} />
       </View>
       {r ? (
         <Result>
@@ -62,6 +132,9 @@ function NetCalc() {
               <Body>{it.key}</Body>
               <Body>{chf(it.amount)}</Body>
             </Row>
+          ))}
+          {r.omitted.map((name) => (
+            <Muted key={name}>{t('rateOmitted', { name })}</Muted>
           ))}
           <Muted>{t('netNote')}</Muted>
         </Result>
@@ -198,10 +271,11 @@ export default function Calc() {
     <Screen>
       <H1>{t('calcTitle')}</H1>
       <DisclaimerBanner />
+      <RateParams />
       <View style={styles.tabs}>
         {tabs.map((x) => (
           <Pressable key={x.k} accessibilityRole="tab" accessibilityState={{ selected: tab === x.k }} onPress={() => setTab(x.k)} style={[styles.tab, tab === x.k && styles.tabOn]}>
-            <Ionicons name={x.icon} size={16} color={tab === x.k ? '#fff' : colors.primary} />
+            <Ionicons name={x.icon} size={16} color={tab === x.k ? '#fff' : colors.primaryText} />
             <Text style={[styles.tabText, tab === x.k && { color: '#fff' }]} numberOfLines={1}>
               {x.label}
             </Text>
@@ -218,7 +292,9 @@ const styles = StyleSheet.create({
   result: { backgroundColor: colors.surfaceAlt, borderRadius: radius.md, padding: 14, gap: 6, marginTop: 4 },
   warn: { flex: 1, fontSize: 12, color: '#8A5A00', fontWeight: '600' },
   tabs: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  tab: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, minHeight: 38, borderRadius: 999, borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.surface, maxWidth: '100%' },
+  tab: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, minHeight: hit, borderRadius: 999, borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.surface, maxWidth: '100%' },
   tabOn: { backgroundColor: colors.primary },
-  tabText: { fontSize: 13, fontWeight: '600', color: colors.primary, flexShrink: 1 },
+  tabText: { fontSize: 13, fontWeight: '600', color: colors.primaryText, flexShrink: 1 },
+  param: { gap: 2, paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  link: { fontSize: 13, color: colors.accent, textDecorationLine: 'underline' },
 });

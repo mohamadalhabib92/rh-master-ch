@@ -1,12 +1,60 @@
-/** Calculs RH indicatifs — fonctions pures, testables. Aucune garantie de conformité. */
+/**
+ * Calculs RH indicatifs — fonctions pures. Aucune garantie de conformité.
+ * Les taux 2026 sourcés sont « à confirmer ». Sans source : valeur nulle et « à valider ».
+ * Sources citées par le cahier : OFAS (sozialversicherungen.admin.ch) et OCAS, consultés le 31.10.2026.
+ */
 
-export const DEFAULT_RATES = {
-  avs: 5.3, // AVS/AI/APG part employé — valeur indicative, à vérifier chaque année
-  ac: 1.1, // AC part employé — indicatif
-  aanp: 1.0, // AANP — dépend de l’assureur et de la branche
-  lpp: 0, // LPP — selon règlement de la caisse
-  acCeiling: 148200, // plafond annuel AC — indicatif, à vérifier
+export type RateStatus = 'a_confirmer' | 'a_valider';
+export type RateUnit = 'percent' | 'chf';
+
+export type RateParam = {
+  id: string;
+  year: 2026;
+  /** null = non sourcé, saisie manuelle uniquement. Jamais une valeur inventée. */
+  value: number | null;
+  unit: RateUnit;
+  source: string;
+  sourceUrl: string;
+  consultedAt: string | null;
+  status: RateStatus;
+  /** employer = référence, non déduite du net. threshold = seuil LPP, non appliqué au brut → net. */
+  kind: 'employee' | 'employer' | 'threshold' | 'manual';
 };
+
+const OFAS = 'OFAS (sozialversicherungen.admin.ch) et OCAS';
+const OFAS_URL = 'https://www.sozialversicherungen.admin.ch/';
+const CONSULTED = '2026-10-31';
+const UNSOURCED = 'YOUR_RATE_SOURCE';
+
+export const RATE_YEAR = 2026 as const;
+
+export const RATE_PARAMS: RateParam[] = [
+  { id: 'avs_ai_apg_employee', year: 2026, value: 5.3, unit: 'percent', source: OFAS, sourceUrl: OFAS_URL, consultedAt: CONSULTED, status: 'a_confirmer', kind: 'employee' },
+  { id: 'avs_ai_apg_employer', year: 2026, value: 5.3, unit: 'percent', source: OFAS, sourceUrl: OFAS_URL, consultedAt: CONSULTED, status: 'a_confirmer', kind: 'employer' },
+  { id: 'ac_employee', year: 2026, value: 1.1, unit: 'percent', source: OFAS, sourceUrl: OFAS_URL, consultedAt: CONSULTED, status: 'a_confirmer', kind: 'employee' },
+  { id: 'ac_employer', year: 2026, value: 1.1, unit: 'percent', source: OFAS, sourceUrl: OFAS_URL, consultedAt: CONSULTED, status: 'a_confirmer', kind: 'employer' },
+  { id: 'ac_ceiling', year: 2026, value: 148200, unit: 'chf', source: OFAS, sourceUrl: OFAS_URL, consultedAt: CONSULTED, status: 'a_confirmer', kind: 'employee' },
+  { id: 'lpp_entry', year: 2026, value: 22680, unit: 'chf', source: OFAS, sourceUrl: OFAS_URL, consultedAt: CONSULTED, status: 'a_confirmer', kind: 'threshold' },
+  { id: 'lpp_coordination', year: 2026, value: 26460, unit: 'chf', source: OFAS, sourceUrl: OFAS_URL, consultedAt: CONSULTED, status: 'a_confirmer', kind: 'threshold' },
+  { id: 'lpp_max_salary', year: 2026, value: 90720, unit: 'chf', source: OFAS, sourceUrl: OFAS_URL, consultedAt: CONSULTED, status: 'a_confirmer', kind: 'threshold' },
+  { id: 'aanp', year: 2026, value: null, unit: 'percent', source: UNSOURCED, sourceUrl: UNSOURCED, consultedAt: null, status: 'a_valider', kind: 'manual' },
+  { id: 'lpp_employee', year: 2026, value: null, unit: 'percent', source: UNSOURCED, sourceUrl: UNSOURCED, consultedAt: null, status: 'a_valider', kind: 'manual' },
+  { id: 'laa', year: 2026, value: null, unit: 'percent', source: UNSOURCED, sourceUrl: UNSOURCED, consultedAt: null, status: 'a_valider', kind: 'manual' },
+  { id: 'ijm', year: 2026, value: null, unit: 'percent', source: UNSOURCED, sourceUrl: UNSOURCED, consultedAt: null, status: 'a_valider', kind: 'manual' },
+  { id: 'family_allowance', year: 2026, value: null, unit: 'chf', source: UNSOURCED, sourceUrl: UNSOURCED, consultedAt: null, status: 'a_valider', kind: 'manual' },
+  { id: 'lpp_age', year: 2026, value: null, unit: 'percent', source: UNSOURCED, sourceUrl: UNSOURCED, consultedAt: null, status: 'a_valider', kind: 'manual' },
+];
+
+export function rateById(id: string): RateParam {
+  const found = RATE_PARAMS.find((p) => p.id === id);
+  if (!found) throw new Error(`Taux inconnu : ${id}`);
+  return found;
+}
+
+export function formatChDate(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  return m ? `${m[3]}.${m[2]}.${m[1]}` : iso;
+}
 
 export function parseNum(s: string): number | null {
   const t = s.replace(/['’\s]/g, '').replace(',', '.');
@@ -15,16 +63,19 @@ export function parseNum(s: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function net(gross: number, r: { avs: number; ac: number; aanp: number; lpp: number; acCeiling: number }) {
+export function net(gross: number, r: { avs: number; ac: number; aanp: number | null; lpp: number | null; acCeiling: number }) {
   const acBase = Math.min(gross, r.acCeiling / 12);
-  const items = [
+  const items: { key: string; amount: number }[] = [
     { key: 'AVS/AI/APG', amount: (gross * r.avs) / 100 },
     { key: 'AC', amount: (acBase * r.ac) / 100 },
-    { key: 'AANP', amount: (gross * r.aanp) / 100 },
-    { key: 'LPP', amount: (gross * r.lpp) / 100 },
   ];
+  const omitted: string[] = [];
+  if (r.aanp === null) omitted.push('AANP');
+  else items.push({ key: 'AANP', amount: (gross * r.aanp) / 100 });
+  if (r.lpp === null) omitted.push('LPP');
+  else items.push({ key: 'LPP', amount: (gross * r.lpp) / 100 });
   const total = items.reduce((a, b) => a + b.amount, 0);
-  return { items, total, net: gross - total };
+  return { items, total, net: gross - total, omitted };
 }
 
 /** Jours ouvrables de vacances au prorata (5 jours/semaine). */

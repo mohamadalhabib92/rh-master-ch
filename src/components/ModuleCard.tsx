@@ -23,7 +23,7 @@ export function ModuleCard({ m }: { m: Module }) {
     <Card onPress={() => router.push(`/module/${m.id}`)} accessibilityLabel={pick(m.title, lang).value}>
       <Row gap={12} style={{ alignItems: 'flex-start' }}>
         <View style={{ width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
-          <Ionicons name={m.icon as keyof typeof Ionicons.glyphMap} size={22} color={colors.primary} />
+          <Ionicons name={m.icon as keyof typeof Ionicons.glyphMap} size={22} color={colors.primaryText} />
         </View>
         <View style={{ flex: 1, gap: 4 }}>
           <Muted>{t('module', { n: m.n })}</Muted>

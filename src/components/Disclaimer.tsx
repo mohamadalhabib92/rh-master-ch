@@ -18,7 +18,10 @@ export function DisclaimerBanner() {
       style={({ pressed }) => [styles.banner, pressed && { opacity: 0.8 }]}
     >
       <Ionicons name="information-circle" size={18} color="#8A5A00" />
-      <Text style={styles.bannerText}>{t('disclaimerShort')}</Text>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={styles.bannerText}>{t('disclaimerShort')}</Text>
+        <Text style={styles.bannerSub}>{t('notAffiliated')}</Text>
+      </View>
       <Ionicons name="chevron-forward" size={16} color="#8A5A00" />
     </Pressable>
   );
@@ -63,7 +66,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F3DFA8',
   },
-  bannerText: { flex: 1, fontSize: 12.5, lineHeight: 17, color: '#6B4700', fontWeight: '600' },
+  bannerText: { fontSize: 12.5, lineHeight: 17, color: '#6B4700', fontWeight: '600' },
+  bannerSub: { fontSize: 12, lineHeight: 16, color: '#6B4700' },
   source: { flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
   sourceLabel: { fontSize: 14, fontWeight: '600', color: colors.text },
 });
