@@ -11,6 +11,8 @@ import { useI18n } from '../../lib/i18n';
 import { appStore, finishQuiz, recordAnswer } from '../../lib/store';
 import { colors, radius } from '../../theme';
 import { BackBar } from '../../components/BackBar';
+import { haptic } from '../../components/haptics';
+import { useFeedback } from '../../components/motion';
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -39,6 +41,7 @@ export default function Quiz() {
   const [checked, setChecked] = useState(false);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
+  const { celebrate } = useFeedback();
 
   if (!m) {
     return (
@@ -92,6 +95,8 @@ export default function Quiz() {
   const check = () => {
     if (sel === null) return;
     setChecked(true);
+    // Retour tactile : réussite nette, erreur douce (jamais punitive).
+    haptic(isOk ? 'success' : 'warning');
     if (isOk) setScore((x) => x + 1);
     recordAnswer(m.id, q.id, isOk);
   };
@@ -100,6 +105,12 @@ export default function Quiz() {
       const finalPct = Math.round((score / deck.length) * 100);
       finishQuiz(m.id, finalPct, !mistakesMode);
       setDone(true);
+      celebrate({
+        title: finalPct >= 80 ? t('quizGreatTitle') : t('quizDoneTitle'),
+        subtitle: t('quizDoneSub', { n: finalPct }),
+        icon: finalPct >= 80 ? 'trophy' : 'ribbon',
+        tone: finalPct >= 80 ? 'gold' : 'success',
+      });
       return;
     }
     setIdx(idx + 1);
@@ -128,7 +139,10 @@ export default function Quiz() {
               accessibilityRole="radio"
               accessibilityState={{ checked: chosen, disabled: checked }}
               disabled={checked}
-              onPress={() => setSel(oi)}
+              onPress={() => {
+                if (sel !== oi) haptic('select');
+                setSel(oi);
+              }}
               style={[styles.opt, chosen && styles.optSel, right && styles.optOk, wrong && styles.optBad]}
             >
               <Ionicons

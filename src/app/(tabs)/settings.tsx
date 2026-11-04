@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
+import { Switch, View } from 'react-native';
+import { useVibrations } from '../../components/access';
 import { DisclaimerBanner } from '../../components/Disclaimer';
 import { RawBackupNotice } from '../../components/RawBackupNotice';
 import { Badge, Body, Button, Card, Chip, H1, H2, Muted, Row, Screen } from '../../components/ui';
@@ -14,6 +16,7 @@ export default function Settings() {
   const { t, lang, setLang } = useI18n();
   const resetPhase = appStore.useDataStatus().resetPhase;
   const [confirm, setConfirm] = useState(false);
+  const [vibrations, setVibrations] = useVibrations();
   return (
     <Screen>
       <H1>{t('settings')}</H1>
@@ -26,6 +29,24 @@ export default function Settings() {
           ))}
         </Row>
         {lang !== 'fr' ? <Muted>{t('provisional')}</Muted> : null}
+      </Card>
+      <Card>
+        <H2>{t('comfort')}</H2>
+        <Row style={{ minHeight: 48, justifyContent: 'space-between' }}>
+          <View style={{ flex: 1 }}>
+            <Body>{t('vibrations')}</Body>
+            <Muted>{t('vibrationsHint')}</Muted>
+          </View>
+          <Switch
+            accessibilityLabel={t('vibrations')}
+            accessibilityHint={t('vibrationsHint')}
+            value={vibrations}
+            onValueChange={setVibrations}
+            trackColor={{ true: colors.primary, false: colors.muted }}
+            ios_backgroundColor={colors.muted}
+          />
+        </Row>
+        <Button variant="ghost" label={t('focusSettings')} onPress={() => router.push('/focus')} style={{ alignSelf: 'flex-start' }} />
       </Card>
       <RawBackupNotice />
       <Card>

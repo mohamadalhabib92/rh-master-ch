@@ -4,7 +4,6 @@ import {
   Animated,
   GestureResponderEvent,
   LayoutChangeEvent,
-  Pressable,
   ScrollView,
   StyleProp,
   StyleSheet,
@@ -16,6 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, hit, radius, space } from '../theme';
+import { FadeIn, PressableScale, springs } from './motion';
 
 export function Screen({
   children,
@@ -50,16 +50,17 @@ export function Screen({
 }
 
 type TProps = TextProps & { color?: string; center?: boolean };
-const mk = (base: TextStyle) =>
+const mk = (base: TextStyle, cap?: number) =>
   function T({ style, color, center, ...p }: TProps) {
     return (
       <Text
+        maxFontSizeMultiplier={cap}
         {...p}
         style={[base, color ? { color } : null, center ? { textAlign: 'center' } : null, style]}
       />
     );
   };
-export const H1 = mk({ fontSize: 28, fontWeight: '800', color: colors.text, letterSpacing: -0.5 });
+export const H1 = mk({ fontSize: 28, fontWeight: '800', color: colors.text, letterSpacing: -0.5 }, 1.6); // Dynamic Type : titre plafonné à ×1,6 pour ne pas casser les mots
 export const H2 = mk({ fontSize: 20, fontWeight: '700', color: colors.text });
 export const H3 = mk({ fontSize: 16, fontWeight: '700', color: colors.text });
 export const Body = mk({ fontSize: 15, lineHeight: 22, color: colors.text });
@@ -78,14 +79,16 @@ export function Card({
 }) {
   if (onPress) {
     return (
-      <Pressable
+      <PressableScale
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         onPress={onPress}
-        style={({ pressed }) => [styles.card, pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] }, style]}
+        scaleTo={0.985}
+        hapticKind="select"
+        style={({ pressed }) => [styles.card, pressed && { opacity: 0.94 }, style]}
       >
         {children}
-      </Pressable>
+      </PressableScale>
     );
   }
   return <View style={[styles.card, style]}>{children}</View>;
@@ -118,22 +121,25 @@ export function Button({
           : 'transparent';
   const fg = variant === 'primary' || variant === 'danger' ? colors.onPrimary : colors.primaryText;
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityState={{ disabled: !!disabled }}
       disabled={disabled}
       onPress={onPress}
+      hapticKind={disabled ? null : variant === 'danger' ? 'warning' : 'tap'}
       style={({ pressed }) => [
         styles.button,
         small && { paddingHorizontal: space.md },
-        { backgroundColor: bg, opacity: disabled ? 0.45 : pressed ? 0.85 : 1 },
+        { backgroundColor: bg, opacity: disabled ? 0.45 : pressed ? 0.9 : 1 },
+        variant === 'primary' && !disabled && styles.buttonLift,
         variant === 'ghost' && { borderWidth: 1, borderColor: colors.border },
         style,
       ]}
     >
       {icon}
-      <Text style={[styles.buttonText, { color: fg }, small && { fontSize: 13 }]}>{label}</Text>
-    </Pressable>
+      <Text maxFontSizeMultiplier={2} style={[styles.buttonText, { color: fg }, small && { fontSize: 13 }]}>{label}</Text>
+    </PressableScale>
   );
 }
 
@@ -149,15 +155,18 @@ export function Chip({
   onLongPress?: () => void;
 }) {
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
+      accessibilityLabel={label}
       accessibilityState={{ selected: !!active }}
       onPress={onPress}
       onLongPress={onLongPress}
+      scaleTo={0.95}
+      hapticKind="select"
       style={[styles.chip, active && { backgroundColor: colors.primary, borderColor: colors.primary }]}
     >
-      <Text style={[styles.chipText, active && { color: colors.onPrimary }]}>{label}</Text>
-    </Pressable>
+      <Text maxFontSizeMultiplier={1.6} style={[styles.chipText, active && { color: colors.onPrimary }]}>{label}</Text>
+    </PressableScale>
   );
 }
 
@@ -171,16 +180,25 @@ export function Badge({ label, tone = 'neutral' }: { label: string; tone?: 'neut
   const [bg, fg] = map[tone];
   return (
     <View style={[styles.badge, { backgroundColor: bg }]}>
-      <Text style={[styles.badgeText, { color: fg }]}>{label}</Text>
+      <Text maxFontSizeMultiplier={1.6} style={[styles.badgeText, { color: fg }]}>{label}</Text>
     </View>
   );
 }
 
 export function ProgressBar({ value, color = colors.primary, height = 6 }: { value: number; color?: string; height?: number }) {
   const v = Math.max(0, Math.min(1, value || 0));
+  const w = useRef(new Animated.Value(v)).current;
+  useEffect(() => {
+    // Remplissage en ressort doux (largeur en % : pas de pilote natif).
+    Animated.spring(w, { toValue: v, ...springs.gentle, useNativeDriver: false }).start();
+  }, [v, w]);
   return (
-    <View style={{ height, borderRadius: height, backgroundColor: colors.surfaceAlt, overflow: 'hidden' }}>
-      <View style={{ width: `${v * 100}%`, height, backgroundColor: color, borderRadius: height }} />
+    <View
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: 100, now: Math.round(v * 100) }}
+      style={{ height, borderRadius: height, backgroundColor: colors.surfaceAlt, overflow: 'hidden' }}
+    >
+      <Animated.View style={{ width: w.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }), height, backgroundColor: color, borderRadius: height }} />
     </View>
   );
 }
@@ -294,12 +312,16 @@ export function Skeleton({ height = 18, width = '100%', style }: { height?: numb
 
 export function EmptyState({ icon, title, text, action }: { icon?: React.ReactNode; title: string; text?: string; action?: React.ReactNode }) {
   return (
-    <View style={styles.empty}>
-      {icon}
+    <FadeIn style={styles.empty}>
+      {icon ? (
+        <View style={styles.emptyHalo}>
+          <View style={styles.emptyIcon}>{icon}</View>
+        </View>
+      ) : null}
       <H3 center>{title}</H3>
-      {text ? <Muted center>{text}</Muted> : null}
-      {action}
-    </View>
+      {text ? <Muted center style={{ maxWidth: 420 }}>{text}</Muted> : null}
+      {action ? <View style={{ marginTop: space.sm }}>{action}</View> : null}
+    </FadeIn>
   );
 }
 
@@ -348,7 +370,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
-  buttonText: { fontSize: 15, fontWeight: '700' },
+  buttonText: { fontSize: 15, fontWeight: '700', letterSpacing: 0.2, textAlign: 'center', flexShrink: 1 },
+  buttonLift: {
+    shadowColor: colors.primary,
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
   chip: {
     minHeight: hit,
     paddingHorizontal: 14,
@@ -358,7 +387,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     justifyContent: 'center',
   },
-  chipText: { fontSize: 13, fontWeight: '600', color: colors.text },
+  chipText: { fontSize: 13, fontWeight: '600', color: colors.text, flexShrink: 1 },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, alignSelf: 'flex-start' },
   badgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.3 },
   sliderHit: { height: 44, justifyContent: 'center' },
@@ -374,4 +403,18 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   empty: { alignItems: 'center', gap: 10, paddingVertical: 40, paddingHorizontal: 20 },
+  emptyHalo: { width: 112, height: 112, borderRadius: 56, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center', marginBottom: space.sm },
+  emptyIcon: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+  },
 });
