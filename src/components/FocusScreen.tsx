@@ -39,7 +39,7 @@ export function FocusScreen({ activities, focusName }: { activities: FocusActivi
     if (!f.active) return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
     return () => sub.remove();
-  }, [!!f.active]);
+  }, [!!f.active]); // eslint-disable-line react-hooks/exhaustive-deps
 
   let body: React.ReactNode;
   if (f.active) body = <Running activities={activities} now={now} onLock={openSheet} />;
@@ -72,10 +72,10 @@ export function FocusScreen({ activities, focusName }: { activities: FocusActivi
 
 function Setup({ activities, onStart, onLock }: { activities: FocusActivity[]; onStart: (min: number, act: string) => void; onLock: () => void }) {
   const { t } = useI18n();
-  const { f } = useFocusClock();
+  const { f, now } = useFocusClock();
   const [min, setMin] = useState<number>(FOCUS_MIN_MINUTES);
   const [act, setAct] = useState(activities[0]?.id ?? 'stay');
-  const streak = focusStreak(f.history, dayKey(Date.now()));
+  const streak = focusStreak(f.history, dayKey(now));
   const tot = focusTotals(f.history);
   return (
     <ScrollView contentContainerStyle={styles.setup}>
@@ -165,10 +165,10 @@ function Running({ activities, now, onLock }: { activities: FocusActivity[]; now
     const m = crossedMilestone(prev.current, rem);
     prev.current = rem;
     if (m != null) announce(m === 1 ? t('focusAnnounceLastMin') : t('focusAnnounceLeft', { n: m }));
-  }, [rem]);
+  }, [rem]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (f.lastAwayMs > 0) announce(t('focusAway', { d: fmtAway(f.lastAwayMs, t) }));
-  }, [f.lastAwayMs]);
+  }, [f.lastAwayMs]); // eslint-disable-line react-hooks/exhaustive-deps
   const size = Math.min(width - 64, height * 0.42, 340);
   const act = activities.find((x) => x.id === a.activity);
   const ml = minutesLeft(rem);
@@ -228,16 +228,16 @@ function Running({ activities, now, onLock }: { activities: FocusActivity[]; now
 
 function Finished() {
   const { t } = useI18n();
-  const { f } = useFocusClock();
+  const { f, now } = useFocusClock();
   const reduced = useReducedMotion();
-  const pop = useRef(new Animated.Value(reduced ? 1 : 0)).current;
+  const [pop] = useState(() => new Animated.Value(reduced ? 1 : 0));
   const rec = f.finished!;
-  const streak = focusStreak(f.history, dayKey(Date.now()));
+  const streak = focusStreak(f.history, dayKey(now));
   useEffect(() => {
     haptic('success');
     announce(`${t('focusDoneTitle')}. ${t('focusDoneText', { n: Math.round(rec.focusedMs / 60_000) })}`);
     if (!reduced) Animated.timing(pop, { toValue: 1, duration: 700, easing: Easing.out(Easing.back(1.6)), useNativeDriver: Platform.OS !== 'web' }).start();
-  }, [rec.id]);
+  }, [rec.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const scale = pop.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] });
   return (
     <View style={[styles.run, { justifyContent: 'center' }]}>

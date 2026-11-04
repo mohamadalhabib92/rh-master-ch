@@ -22,7 +22,7 @@ const native = Platform.OS !== 'web';
 /** Re-rendu chaque seconde (et fin de séance détectée) tant qu'une séance tourne. */
 export function useFocusClock() {
   const f = useFocus();
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!f.active) return;
     const id = setInterval(() => {
@@ -30,15 +30,16 @@ export function useFocusClock() {
       setNow(Date.now());
     }, 1000);
     return () => clearInterval(id);
-  }, [f.active?.id]);
-  void now;
-  return { f, now: Date.now() };
+  }, [f.active?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Jamais avant le dernier instant connu de la séance (horloge figée entre deux ticks).
+  const a = f.active;
+  return { f, now: a ? Math.max(now, a.seenAt, a.runningSince ?? 0, a.awaySince ?? 0) : now };
 }
 
 /** 60 traits de minute : ceux déjà parcourus s'allument. Sans SVG, léger, net à toute taille. */
 export function TickRing({ size, progress, children, label, valueText, breathe = true }: { size: number; progress: number; children?: React.ReactNode; label: string; valueText: string; breathe?: boolean }) {
   const reduced = useReducedMotion();
-  const v = useRef(new Animated.Value(0)).current;
+  const [v] = useState(() => new Animated.Value(0));
   useEffect(() => {
     if (reduced || !breathe) return;
     const loop = Animated.loop(
@@ -88,7 +89,7 @@ export function TickRing({ size, progress, children, label, valueText, breathe =
 export function EmergencyExit({ onConfirmed, minutesLeft }: { onConfirmed: () => void; minutesLeft: number }) {
   const { t } = useI18n();
   const reduced = useReducedMotion();
-  const fill = useRef(new Animated.Value(0)).current;
+  const [fill] = useState(() => new Animated.Value(0));
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [holding, setHolding] = useState(false);
   const [confirm, setConfirm] = useState(false);
