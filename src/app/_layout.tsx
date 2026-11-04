@@ -4,6 +4,7 @@ import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { BootGate } from '../components/BootGate';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { FocusPill } from '../components/FocusKit';
 import { FeedbackProvider } from '../components/motion';
 import { I18nProvider } from '../lib/i18n';
 import { colors } from '../theme';
@@ -21,7 +22,9 @@ export default function RootLayout() {
               <Stack.Screen name="module/[id]" />
               <Stack.Screen name="quiz/[id]" />
               <Stack.Screen name="disclaimer" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="focus" options={{ gestureEnabled: false, animation: 'fade' }} />
             </Stack>
+            <FocusPill />
             </FeedbackProvider>
           </BootGate>
         </I18nProvider>

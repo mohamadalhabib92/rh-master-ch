@@ -46,6 +46,7 @@ export default function Settings() {
             ios_backgroundColor={colors.muted}
           />
         </Row>
+        <Button variant="ghost" label={t('focusSettings')} onPress={() => router.push('/focus')} style={{ alignSelf: 'flex-start' }} />
       </Card>
       <RawBackupNotice />
       <Card>

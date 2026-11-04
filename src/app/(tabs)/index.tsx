@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { DisclaimerBanner, SourcesList } from '../../components/Disclaimer';
+import { FocusEntryCard } from '../../components/FocusKit';
 import { RawBackupNotice } from '../../components/RawBackupNotice';
 import { ModuleCard } from '../../components/ModuleCard';
 import { Badge, Body, Button, Card, H1, H2, Muted, ProgressBar, Row, Screen } from '../../components/ui';
@@ -39,6 +40,7 @@ export default function Home() {
           style={{ alignSelf: 'flex-start', marginTop: 4 }}
         />
       </View>
+      <FocusEntryCard />
       <DisclaimerBanner />
       <RawBackupNotice />
       <Card>
