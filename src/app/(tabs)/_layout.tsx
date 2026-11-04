@@ -3,8 +3,12 @@ import { Tabs } from 'expo-router/js-tabs';
 import React from 'react';
 import { useI18n } from '../../lib/i18n';
 import { colors } from '../../theme';
+import { useWindowDimensions } from 'react-native';
 
 export default function TabsLayout() {
+  // Libellés d'onglets : suivent la taille de texte du système jusqu'à ×1,4, au-delà la barre déborderait.
+  const { fontScale } = useWindowDimensions();
+  const tabFs = (n: number) => Math.round(n * Math.min(fontScale, 1.4));
   const { t } = useI18n();
   const icon =
     (name: keyof typeof Ionicons.glyphMap) =>
@@ -18,7 +22,8 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.primaryText,
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
-        tabBarLabelStyle: { fontWeight: '600' },
+        tabBarAllowFontScaling: false,
+        tabBarLabelStyle: { fontSize: tabFs(10), fontWeight: '600' },
       }}
     >
       <Tabs.Screen name="index" options={{ title: t('tabHome'), tabBarIcon: icon('home-outline') }} />

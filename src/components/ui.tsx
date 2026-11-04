@@ -50,16 +50,17 @@ export function Screen({
 }
 
 type TProps = TextProps & { color?: string; center?: boolean };
-const mk = (base: TextStyle) =>
+const mk = (base: TextStyle, cap?: number) =>
   function T({ style, color, center, ...p }: TProps) {
     return (
       <Text
+        maxFontSizeMultiplier={cap}
         {...p}
         style={[base, color ? { color } : null, center ? { textAlign: 'center' } : null, style]}
       />
     );
   };
-export const H1 = mk({ fontSize: 28, fontWeight: '800', color: colors.text, letterSpacing: -0.5 });
+export const H1 = mk({ fontSize: 28, fontWeight: '800', color: colors.text, letterSpacing: -0.5 }, 1.6); // Dynamic Type : titre plafonné à ×1,6 pour ne pas casser les mots
 export const H2 = mk({ fontSize: 20, fontWeight: '700', color: colors.text });
 export const H3 = mk({ fontSize: 16, fontWeight: '700', color: colors.text });
 export const Body = mk({ fontSize: 15, lineHeight: 22, color: colors.text });
@@ -137,7 +138,7 @@ export function Button({
       ]}
     >
       {icon}
-      <Text style={[styles.buttonText, { color: fg }, small && { fontSize: 13 }]}>{label}</Text>
+      <Text maxFontSizeMultiplier={2} style={[styles.buttonText, { color: fg }, small && { fontSize: 13 }]}>{label}</Text>
     </PressableScale>
   );
 }
@@ -164,7 +165,7 @@ export function Chip({
       hapticKind="select"
       style={[styles.chip, active && { backgroundColor: colors.primary, borderColor: colors.primary }]}
     >
-      <Text style={[styles.chipText, active && { color: colors.onPrimary }]}>{label}</Text>
+      <Text maxFontSizeMultiplier={1.6} style={[styles.chipText, active && { color: colors.onPrimary }]}>{label}</Text>
     </PressableScale>
   );
 }
@@ -179,7 +180,7 @@ export function Badge({ label, tone = 'neutral' }: { label: string; tone?: 'neut
   const [bg, fg] = map[tone];
   return (
     <View style={[styles.badge, { backgroundColor: bg }]}>
-      <Text style={[styles.badgeText, { color: fg }]}>{label}</Text>
+      <Text maxFontSizeMultiplier={1.6} style={[styles.badgeText, { color: fg }]}>{label}</Text>
     </View>
   );
 }
@@ -369,7 +370,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
-  buttonText: { fontSize: 15, fontWeight: '700', letterSpacing: 0.2 },
+  buttonText: { fontSize: 15, fontWeight: '700', letterSpacing: 0.2, textAlign: 'center', flexShrink: 1 },
   buttonLift: {
     shadowColor: colors.primary,
     shadowOpacity: 0.22,
@@ -386,7 +387,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     justifyContent: 'center',
   },
-  chipText: { fontSize: 13, fontWeight: '600', color: colors.text },
+  chipText: { fontSize: 13, fontWeight: '600', color: colors.text, flexShrink: 1 },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, alignSelf: 'flex-start' },
   badgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.3 },
   sliderHit: { height: 44, justifyContent: 'center' },

@@ -30,7 +30,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/lib/persist.test.ts",
+    "test": "node --experimental-strip-types --test src/lib/persist.test.ts src/lib/contrast.test.mjs",
     "export:web": "expo export -p web && node scripts/pwa.mjs",
     "icons": "python3 scripts/make-icons.py"
   },
