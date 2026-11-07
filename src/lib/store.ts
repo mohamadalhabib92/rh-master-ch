@@ -1,9 +1,12 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Lang } from '../i18n/strings';
+import { adoptLearningRecord, LEARNING_SCHEMA_VERSION, LEARNING_STORAGE_KEY } from './learning-state';
 import { createPersistedStore } from './persist';
 
 export type ModuleProgress = { best: number; attempts: number; correct: string[]; lastAt: number };
 
 export type AppState = {
+  schemaVersion: typeof LEARNING_SCHEMA_VERSION;
   lang: Lang;
   ficheRead: Record<string, boolean>;
   progress: Record<string, ModuleProgress>;
@@ -12,14 +15,27 @@ export type AppState = {
   disclaimerSeen: boolean;
 };
 
-export const appStore = createPersistedStore<AppState>('rhmaster:v1', {
-  lang: 'fr',
-  ficheRead: {},
-  progress: {},
-  mistakes: [],
-  lastModule: null,
-  disclaimerSeen: false,
-});
+function reviseAppState(value: Partial<AppState>): Partial<AppState> | null {
+  const adopted = adoptLearningRecord(value as Record<string, unknown>);
+  if (!adopted.ok) return null;
+  return adopted.record as Partial<AppState>;
+}
+
+export const appStore = createPersistedStore<AppState>(
+  LEARNING_STORAGE_KEY,
+  {
+    schemaVersion: LEARNING_SCHEMA_VERSION,
+    lang: 'fr',
+    ficheRead: {},
+    progress: {},
+    mistakes: [],
+    lastModule: null,
+    disclaimerSeen: false,
+  },
+  8000,
+  AsyncStorage,
+  reviseAppState,
+);
 
 /** Enregistre une réponse : met à jour les bonnes réponses et la liste d’erreurs à revoir. */
 export function recordAnswer(moduleId: string, questionId: string, ok: boolean) {

@@ -10,6 +10,8 @@
     "jest.config.js",
     "android",
     "ios",
-    "src/lib/persist.test.ts"
+    "src/lib/persist.test.ts",
+    "src/**/*.test.ts",
+    "src/content/parse-bank.ts"
   ]
 }

@@ -26,6 +26,11 @@ export const LAWS: Record<string, { fr: string; de: string; it: string; en: stri
   MSST: { fr: 'Directive CFST « MSST » (appel aux spécialistes de la sécurité au travail)', de: 'EKAS-Richtlinie «ASA» (Beizug von Arbeitsärzten und anderen Spezialisten)', it: 'Direttiva CFSL «MSSL»', en: 'FCOS guideline on occupational safety specialists (MSST/ASA)' },
 };
 
+/** Liens encore placeholder : ils ne sont pas affichés et ne sont pas une source. */
+export function visibleOfficialSources<T extends { url: string }>(sources: T[]): T[] {
+  return sources.filter((source) => !source.url.startsWith('YOUR_'));
+}
+
 export const OFFICIAL_SOURCES = [
   { label: 'Fedlex — recueil officiel du droit fédéral', url: 'https://www.fedlex.admin.ch/' },
   { label: 'SECO — Travail (conditions de travail, LTr)', url: 'https://www.seco.admin.ch/' },
