@@ -28,6 +28,9 @@ const UNSOURCED = 'YOUR_RATE_SOURCE';
 
 export const RATE_YEAR = 2026 as const;
 
+/** Cinq calculateurs. L'ordre est celui des onglets. */
+export const CALCULATOR_IDS = ['net', 'vac', 'ot', 'notice', 'prot'] as const;
+
 export const RATE_PARAMS: RateParam[] = [
   { id: 'avs_ai_apg_employee', year: 2026, value: 5.3, unit: 'percent', source: OFAS, sourceUrl: OFAS_URL, consultedAt: CONSULTED, status: 'a_confirmer', kind: 'employee' },
   { id: 'avs_ai_apg_employer', year: 2026, value: 5.3, unit: 'percent', source: OFAS, sourceUrl: OFAS_URL, consultedAt: CONSULTED, status: 'a_confirmer', kind: 'employer' },
@@ -78,7 +81,14 @@ export function net(gross: number, r: { avs: number; ac: number; aanp: number | 
   return { items, total, net: gross - total, omitted };
 }
 
-/** Jours ouvrables de vacances au prorata (5 jours/semaine). */
+/**
+ * Jours ouvrables pour un horaire de 5 jours : semaines × 5 × mois/12.
+ * `ratePct` est seulement renvoyé. Il ne modifie pas les jours.
+ * Cela signale une ambiguïté d'API, pas une erreur d'arrondi du temps plein.
+ * Le temps partiel dépend des jours réellement travaillés dans la semaine :
+ * ne pas diviser tous les jours par deux. Règle humaine encore en attente
+ * (`content/content-contract.json`, backlog `vacation-activity-rate`).
+ */
 export function vacation(weeks: number, months: number, ratePct: number) {
   const days = weeks * 5 * (months / 12);
   return { days: Math.round(days * 10) / 10, weeks: Math.round((days / 5) * 100) / 100, hourlyPct: Math.round((weeks / (52 - weeks)) * 10000) / 100, ratePct };

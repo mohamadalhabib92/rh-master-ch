@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "rhmaster-v1",
+  "title": "Progression locale RH Master CH",
+  "description": "Clé AsyncStorage rhmaster:v1. Les clés inconnues sont conservées. schemaVersion absent signifie l'état déjà installé. Une schemaVersion supérieure à 1 ne doit pas être réécrite.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "lang": { "enum": ["fr", "de", "it", "en"] },
+    "ficheRead": { "type": "object", "additionalProperties": { "type": "boolean" } },
+    "progress": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["best", "attempts", "correct", "lastAt"],
+        "properties": {
+          "best": { "type": "number" },
+          "attempts": { "type": "number" },
+          "correct": { "type": "array", "items": { "type": "string" } },
+          "lastAt": { "type": "number" }
+        }
+      }
+    },
+    "mistakes": { "type": "array", "items": { "type": "string" } },
+    "lastModule": { "type": ["string", "null"] },
+    "disclaimerSeen": { "type": "boolean" }
+  }
+}

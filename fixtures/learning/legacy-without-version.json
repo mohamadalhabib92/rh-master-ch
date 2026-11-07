@@ -1,0 +1,11 @@
+{
+  "lang": "fr",
+  "ficheRead": { "contrat": true },
+  "progress": {
+    "contrat": { "best": 80, "attempts": 2, "correct": ["contrat-1", "contrat-3"], "lastAt": 1700000000000 },
+    "salaire": { "best": 40, "attempts": 1, "correct": ["salaire-2"], "lastAt": 1700000001000 }
+  },
+  "mistakes": ["salaire-4"],
+  "lastModule": "salaire",
+  "disclaimerSeen": true
+}

@@ -37,6 +37,11 @@ export function createPersistedStore<T extends object>(
   initial: T,
   timeoutMs = 8000,
   storage: PersistStorage = AsyncStorage,
+  /**
+   * Contrat optionnel après une lecture JSON réussie.
+   * `null` : le blob reste illisible, aucune écriture (version future ou forme incompatible).
+   */
+  revise?: (value: Partial<T>) => Partial<T> | null,
 ) {
   let state: T = initial;
   let phase: HydrationPhase = 'pending';
@@ -192,6 +197,22 @@ export function createPersistedStore<T extends object>(
           emit();
           return;
         }
+        let adopted: Partial<T> = parsed.value;
+        if (revise) {
+          const next = revise(parsed.value);
+          if (!next) {
+            // Version ou forme non adoptable. On ne réinitialise pas le disque.
+            rawBackup = raw ?? '';
+            unreadable = true;
+            pendingReset = false;
+            resetPhase = 'idle';
+            phase = 'ready';
+            syncStatus();
+            emit();
+            return;
+          }
+          adopted = next;
+        }
         rawBackup = null;
         unreadable = false;
         if (pendingReset) {
@@ -200,7 +221,7 @@ export function createPersistedStore<T extends object>(
         }
         if (resetPhase === 'pending') resetPhase = 'idle';
         pendingPatches = [];
-        state = { ...initial, ...parsed.value };
+        state = { ...initial, ...adopted };
         for (const patch of patches) state = applyPatch(state, patch);
         fulfilledGeneration = my;
         unreadable = false;
