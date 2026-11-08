@@ -29,7 +29,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/lib/persist.test.ts",
+    "test": "node --experimental-strip-types --import ./scripts/register-ts.mjs --test src/lib/persist.test.ts src/lib/learning-state.test.ts src/lib/progress-export.test.ts src/content/bank.test.ts",
     "export:web": "expo export -p web && node scripts/pwa.mjs",
     "icons": "python3 scripts/make-icons.py"
   },

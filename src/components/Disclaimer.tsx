@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
-import { OFFICIAL_SOURCES } from '../data/laws';
+import { OFFICIAL_SOURCES, visibleOfficialSources } from '../data/laws';
 import { useI18n } from '../lib/i18n';
 import { colors, radius, space } from '../theme';
 import { H3, Muted } from './ui';
@@ -32,7 +32,7 @@ export function SourcesList() {
   return (
     <View style={{ gap: 6 }}>
       <H3>{t('sourcesOfficial')}</H3>
-      {OFFICIAL_SOURCES.map((s) => {
+      {visibleOfficialSources(OFFICIAL_SOURCES).map((s) => {
         const placeholder = s.url.startsWith('YOUR_');
         return (
           <Pressable

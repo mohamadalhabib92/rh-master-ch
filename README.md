@@ -63,6 +63,10 @@ Pour régénérer les icônes : `python3 scripts/make-icons.py "#C8102E" "#FFFFF
 
 Un assistant IA de questions-réponses RH pourrait être ajouté **hors du parcours principal**. Il passerait par un backend qui garde la clé côté serveur : `OPENAI_API_KEY=YOUR_OPENAI_API_KEY`. Cette clé ne doit jamais être mise dans une variable `EXPO_PUBLIC_*`. Ses réponses devraient citer des sources vérifiables.
 
+## Contrat de fondation
+
+`content/LIRE.md` sépare le certificat HRSE et le brevet fédéral, et rappelle que les 137 questions restent non validées. `npm test` vérifie les identifiants, la progression locale `rhmaster:v1` et l'absence de publication. Aucune question n'est reliée automatiquement à une compétence d'examen.
+
 ## Structure
 
 ```
