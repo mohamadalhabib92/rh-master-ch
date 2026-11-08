@@ -7,6 +7,7 @@ import { Badge, Body, Button, Card, Chip, H1, H2, Muted, Row, Screen } from '../
 import { LANGS } from '../../i18n/strings';
 import { aiOptionalServiceDown } from '../../lib/flags';
 import { useI18n } from '../../lib/i18n';
+import { confirmProgressReset } from '../../lib/reset-progress';
 import { appStore } from '../../lib/store';
 import { colors } from '../../theme';
 
@@ -33,15 +34,14 @@ export default function Settings() {
         <Muted>{t('dataLocalText')}</Muted>
         {resetPhase === 'done' ? <Body color={colors.ok}>{t('resetDone')}</Body> : null}
         {resetPhase === 'pending' ? <Body>{t('resetPending')}</Body> : null}
+        {resetPhase === 'failed' ? <Body color={colors.danger}>{t('resetFailed')}</Body> : null}
         {confirm ? (
           <Row style={{ flexWrap: 'wrap' }}>
             <Button
               variant="danger"
               label={t('confirmReset')}
               onPress={() => {
-                const keep = appStore.get().lang;
-                appStore.reset();
-                appStore.set({ lang: keep });
+                confirmProgressReset(appStore);
                 setConfirm(false);
               }}
             />

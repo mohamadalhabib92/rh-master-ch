@@ -21,6 +21,8 @@ Les 137 identifiants figés sont dans `question-ids.json`. Les renommer casse la
 
 `learning-state.schema.json` et `fixtures/learning/` décrivent l'état déjà sur l'appareil. Une sauvegarde sans `schemaVersion` est relue. Une `schemaVersion` supérieure à 1 n'est pas réécrite. Les clés inconnues restent dans le blob.
 
+Une confirmation de réinitialisation avant la fin de la lecture ne supprime pas le blob qui arrive ensuite. Si la suppression échoue, la langue n'est pas réécrite par-dessus l'original : la dernière lecture est reprise et la phase `failed` s'affiche. Ce n'est pas une restauration d'appareil.
+
 ## Vacances
 
 `vacation(4, 12, 50)` renvoie 20 jours : le taux d'activité n'est pas appliqué. Ce n'est pas une règle de temps partiel. Ne pas diviser les jours par deux sans source. Détail dans le backlog du contrat.

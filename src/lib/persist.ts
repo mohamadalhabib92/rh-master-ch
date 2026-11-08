@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
 
 export type HydrationPhase = 'pending' | 'ready' | 'timedOut';
-export type ResetPhase = 'idle' | 'pending' | 'done';
+export type ResetPhase = 'idle' | 'pending' | 'done' | 'failed';
 
 export type DataStatus = {
   unreadable: boolean;
@@ -31,6 +31,9 @@ const SAVE_DELAY_MS = 150;
  * l'état initial par-dessus la progression.
  * Les modifications faites avant la lecture sont rejouées sur les données
  * lues, pas fusionnées par-dessus un état vide.
+ * Une confirmation de reset avant cette lecture est ignorée : le blob lu
+ * est affiché, pas supprimé. Si removeItem échoue, aucune écriture suivante
+ * ne remplace le blob ; la dernière copie adoptée est relue.
  */
 export function createPersistedStore<T extends object>(
   key: string,
@@ -53,7 +56,9 @@ export function createPersistedStore<T extends object>(
   let unreadable = false;
   let rawBackup: string | null = null;
   let resetPhase: ResetPhase = 'idle';
-  let pendingReset = false;
+  let writeBlocked = false;
+  /** Dernier état adopté depuis une lecture réussie. Sert si la suppression échoue. */
+  let adoptedSnapshot: T | null = null;
   let dataStatus: DataStatus = { unreadable: false, rawBackup: null, resetPhase: 'idle' };
   let pendingPatches: Patch<T>[] = [];
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -62,7 +67,7 @@ export function createPersistedStore<T extends object>(
   const listeners = new Set<() => void>();
   const emit = () => listeners.forEach((l) => l());
 
-  const canWrite = () => fulfilledGeneration === generation && !unreadable;
+  const canWrite = () => fulfilledGeneration === generation && !unreadable && !writeBlocked;
 
   const syncStatus = () => {
     if (
@@ -94,13 +99,18 @@ export function createPersistedStore<T extends object>(
     return { ...base, ...partial };
   };
 
-  const enqueueWrite = (op: () => Promise<void>) => {
+  const enqueueWrite = (op: () => Promise<void>, onReject?: () => void) => {
     const genAt = generation;
     writeChain = writeChain
       .catch(() => undefined)
       .then(() => {
         if (genAt !== generation || !canWrite()) return undefined;
-        return op().then(() => undefined);
+        return op().then(
+          () => undefined,
+          () => {
+            onReject?.();
+          },
+        );
       });
   };
 
@@ -116,14 +126,84 @@ export function createPersistedStore<T extends object>(
     }, SAVE_DELAY_MS);
   };
 
+  const rereadAfterFailedDelete = () => {
+    const my = ++generation;
+    inflightGeneration = my;
+    writeBlocked = true;
+    clearSaveTimer();
+    pendingPatches = [];
+    storage
+      .getItem(key)
+      .then((raw) => {
+        if (my !== generation) return;
+        if (inflightGeneration === my) inflightGeneration = 0;
+        const parsed = parseStored(raw);
+        if (!parsed.ok) {
+          rawBackup = raw ?? '';
+          unreadable = true;
+          phase = 'ready';
+          syncStatus();
+          emit();
+          return;
+        }
+        let adopted: Partial<T> = parsed.value;
+        if (revise) {
+          const next = revise(parsed.value);
+          if (!next) {
+            rawBackup = raw ?? '';
+            unreadable = true;
+            phase = 'ready';
+            syncStatus();
+            emit();
+            return;
+          }
+          adopted = next;
+        }
+        pendingPatches = [];
+        state = { ...initial, ...adopted };
+        adoptedSnapshot = state;
+        rawBackup = null;
+        unreadable = false;
+        writeBlocked = false;
+        fulfilledGeneration = my;
+        phase = 'ready';
+        syncStatus();
+        emit();
+      })
+      .catch(() => {
+        if (my !== generation) return;
+        if (inflightGeneration === my) inflightGeneration = 0;
+        phase = 'ready';
+        emit();
+      });
+  };
+
+  const failDelete = () => {
+    writeBlocked = true;
+    clearSaveTimer();
+    pendingPatches = [];
+    if (adoptedSnapshot) state = adoptedSnapshot;
+    resetPhase = 'failed';
+    syncStatus();
+    emit();
+    rereadAfterFailedDelete();
+  };
+
   const scheduleRemove = (after?: () => void) => {
     if (!canWrite()) return;
     clearSaveTimer();
-    enqueueWrite(() =>
-      storage.removeItem(key).then(() => {
-        after?.();
-      }),
-    );
+    const genAt = generation;
+    writeChain = writeChain.catch(() => undefined).then(() => {
+      if (genAt !== generation || !canWrite()) return undefined;
+      return storage.removeItem(key).then(
+        () => {
+          after?.();
+        },
+        () => {
+          failDelete();
+        },
+      );
+    });
   };
 
   const parseStored = (raw: string | null): { ok: true; value: Partial<T> } | { ok: false } => {
@@ -137,14 +217,11 @@ export function createPersistedStore<T extends object>(
     }
   };
 
-  const hydrate = (keepReset = false) => {
+  const hydrate = () => {
     const my = ++generation;
     inflightGeneration = my;
     phase = 'pending';
-    if (!keepReset) {
-      pendingReset = false;
-      pendingPatches = [];
-    }
+    pendingPatches = [];
     clearHydrationTimer();
     clearSaveTimer();
     emit();
@@ -156,26 +233,6 @@ export function createPersistedStore<T extends object>(
 
     const finishInflight = () => {
       if (inflightGeneration === my) inflightGeneration = 0;
-    };
-
-    const applyReset = (patches: Patch<T>[]) => {
-      pendingReset = false;
-      pendingPatches = [];
-      state = initial;
-      for (const patch of patches) state = applyPatch(state, patch);
-      fulfilledGeneration = my;
-      unreadable = false;
-      phase = 'ready';
-      // Suppression explicite : removeItem, jamais un setItem de l'état vide.
-      resetPhase = 'pending';
-      syncStatus();
-      scheduleRemove(() => {
-        resetPhase = 'done';
-        syncStatus();
-        emit();
-      });
-      if (patches.length > 0) schedulePersist();
-      emit();
     };
 
     storage
@@ -190,7 +247,6 @@ export function createPersistedStore<T extends object>(
           // Copie brute conservée. Aucun setItem ni removeItem.
           rawBackup = raw ?? '';
           unreadable = true;
-          pendingReset = false;
           resetPhase = 'idle';
           phase = 'ready';
           syncStatus();
@@ -204,7 +260,6 @@ export function createPersistedStore<T extends object>(
             // Version ou forme non adoptable. On ne réinitialise pas le disque.
             rawBackup = raw ?? '';
             unreadable = true;
-            pendingReset = false;
             resetPhase = 'idle';
             phase = 'ready';
             syncStatus();
@@ -215,14 +270,11 @@ export function createPersistedStore<T extends object>(
         }
         rawBackup = null;
         unreadable = false;
-        if (pendingReset) {
-          applyReset(patches);
-          return;
-        }
         if (resetPhase === 'pending') resetPhase = 'idle';
         pendingPatches = [];
         state = { ...initial, ...adopted };
         for (const patch of patches) state = applyPatch(state, patch);
+        adoptedSnapshot = state;
         fulfilledGeneration = my;
         unreadable = false;
         phase = 'ready';
@@ -254,40 +306,31 @@ export function createPersistedStore<T extends object>(
       emit();
       schedulePersist();
     },
-    reset() {
+    reset(afterRemoved?: () => void) {
       clearSaveTimer();
-      if (unreadable) {
-        resetPhase = 'idle';
-        syncStatus();
-        emit();
-        return;
-      }
+      // Tant que la lecture n'a pas abouti, une confirmation est aveugle :
+      // elle ne pose pas de suppression différée.
+      if (unreadable || !canWrite()) return;
+      adoptedSnapshot = state;
       state = initial;
       pendingPatches = [];
-      if (canWrite()) {
-        pendingReset = false;
-        resetPhase = 'pending';
-        syncStatus();
-        emit();
-        scheduleRemove(() => {
-          resetPhase = 'done';
-          syncStatus();
-          emit();
-        });
-        return;
-      }
-      pendingReset = true;
       resetPhase = 'pending';
       syncStatus();
       emit();
-      if (inflightGeneration !== generation) hydrate(true);
+      scheduleRemove(() => {
+        adoptedSnapshot = state;
+        resetPhase = 'done';
+        syncStatus();
+        emit();
+        afterRemoved?.();
+      });
     },
     isUnreadable: () => unreadable,
     getRawBackup: () => rawBackup,
     getResetPhase: () => resetPhase,
     /** Relance la lecture. Annule toute écriture encore armée. N'écrit rien. */
     retryHydration() {
-      hydrate(pendingReset);
+      hydrate();
     },
     /**
      * Affiche les données embarquées sans attendre le stockage.

@@ -93,32 +93,41 @@ test('continue offline does not write until getItem succeeds, then replays onto 
   }
 });
 
-test('reset before a successful read never writes the empty state', async () => {
+test('reset before a successful read does not delete the blob that arrives later', async () => {
   mock.timers.enable({ apis: ['setTimeout'] });
   try {
     const { storage, pending, sets, removes } = fakeStorage();
     const store = createPersistedStore('rhmaster:v1', initial, 8000, storage);
+    mock.timers.tick(8000);
     store.continueOffline();
     store.set({ extra: 9 });
     store.reset();
     store.set({ lang: 'it' });
-    assert.equal(store.getResetPhase(), 'pending');
+    assert.equal(store.getResetPhase(), 'idle');
     mock.timers.tick(10_000);
     await drain();
     assert.equal(sets.length, 0);
     assert.equal(removes.n, 0);
-    assert.equal(store.getResetPhase(), 'pending');
 
-    pending[0].resolve(JSON.stringify(saved));
+    pending[0].resolve(JSON.stringify({ ...saved, futureNote: 'keep' }));
     await drain();
-    mock.timers.tick(500);
-    await drain();
-    assert.equal(removes.n, 1);
-    assert.equal(sets.length, 1);
-    assert.deepEqual(JSON.parse(sets[0]), { lang: 'it', progress: {}, extra: 0 });
-    assert.deepEqual(store.get().progress, {});
+    assert.equal(removes.n, 0);
+    assert.equal(sets.length, 0);
     assert.equal(store.get().lang, 'it');
-    assert.equal(store.getResetPhase(), 'done');
+    assert.equal(store.get().extra, 9);
+    assert.deepEqual(store.get().progress, { contrat: { best: 80 } });
+    assert.equal((store.get() as { futureNote?: string }).futureNote, 'keep');
+    assert.equal(store.getResetPhase(), 'idle');
+
+    mock.timers.tick(150);
+    await drain();
+    assert.equal(removes.n, 0);
+    assert.equal(sets.length, 1);
+    const written = JSON.parse(sets[0]) as { lang: string; progress: { contrat: { best: number } }; extra: number; futureNote: string };
+    assert.equal(written.lang, 'it');
+    assert.equal(written.extra, 9);
+    assert.equal(written.progress.contrat.best, 80);
+    assert.equal(written.futureNote, 'keep');
   } finally {
     mock.timers.reset();
   }
@@ -132,7 +141,7 @@ test('unreadable JSON is kept as a raw export and never written back', async () 
     const store = createPersistedStore('rhmaster:v1', initial, 8000, storage);
     store.continueOffline();
     store.reset();
-    assert.equal(store.getResetPhase(), 'pending');
+    assert.equal(store.getResetPhase(), 'idle');
     pending[0].resolve(raw);
     await drain();
     mock.timers.tick(10_000);
@@ -166,8 +175,9 @@ test('a rejected read does not unlock setItem or removeItem', async () => {
     await drain();
     assert.equal(sets.length, 0);
     assert.equal(removes.n, 0);
-    assert.equal(pending.length, 2);
+    assert.equal(pending.length, 1);
 
+    store.retryHydration();
     pending[1].reject(new Error('disk again'));
     await drain();
     mock.timers.tick(10_000);
@@ -181,7 +191,9 @@ test('a rejected read does not unlock setItem or removeItem', async () => {
     mock.timers.tick(500);
     await drain();
     assert.equal(sets.length, 0);
-    assert.equal(removes.n, 1);
+    assert.equal(removes.n, 0);
+    assert.deepEqual(store.get().progress, saved.progress);
+    assert.equal(store.get().extra, saved.extra);
   } finally {
     mock.timers.reset();
   }
