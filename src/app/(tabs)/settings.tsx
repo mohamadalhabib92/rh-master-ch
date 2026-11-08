@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { DisclaimerBanner } from '../../components/Disclaimer';
+import { HealthyBackup } from '../../components/HealthyBackup';
 import { RawBackupNotice } from '../../components/RawBackupNotice';
 import { Badge, Body, Button, Card, Chip, H1, H2, Muted, Row, Screen } from '../../components/ui';
 import { LANGS } from '../../i18n/strings';
@@ -29,6 +30,7 @@ export default function Settings() {
         {lang !== 'fr' ? <Muted>{t('provisional')}</Muted> : null}
       </Card>
       <RawBackupNotice />
+      <HealthyBackup />
       <Card>
         <H2>{t('dataLocal')}</H2>
         <Muted>{t('dataLocalText')}</Muted>

@@ -23,6 +23,8 @@ Les 137 identifiants figés sont dans `question-ids.json`. Les renommer casse la
 
 Une confirmation de réinitialisation avant la fin de la lecture ne supprime pas le blob qui arrive ensuite. Si la suppression échoue, la langue n'est pas réécrite par-dessus l'original : la dernière lecture est reprise et la phase `failed` s'affiche. Ce n'est pas une restauration d'appareil.
 
+Avant la première réécriture d'un état sain, une copie est écrite sous `rhmaster:v1:before-rewrite`, relue, et refusée si l'empreinte ou les comptes ne correspondent pas. L'écran n'affiche que l'empreinte et les comptes. Le retour arrière réécrit la clé principale et garde la copie. Une suppression confirmée retire seulement la clé principale.
+
 ## Vacances
 
 `vacation(4, 12, 50)` renvoie 20 jours : le taux d'activité n'est pas appliqué. Ce n'est pas une règle de temps partiel. Ne pas diviser les jours par deux sans source. Détail dans le backlog du contrat.

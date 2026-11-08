@@ -26,12 +26,15 @@ function deferred<T>() {
 function fakeStorage(initial: string | null) {
   const sets: string[] = [];
   const removes = { n: 0 };
+  const side = new Map<string, string>();
   const pending = deferred<string | null>();
   const storage: PersistStorage = {
-    getItem() {
+    getItem(key: string) {
+      if (key.endsWith(':before-rewrite')) return Promise.resolve(side.get(key) ?? null);
       return pending.promise;
     },
-    setItem(_key, value) {
+    setItem(key: string, value: string) {
+      if (key.endsWith(':before-rewrite')) side.set(key, value);
       sets.push(value);
       return Promise.resolve();
     },
@@ -132,12 +135,13 @@ test('legacy fixture replays onto saved ids and can roll back', async () => {
     store.set({ lang: 'it' });
     mock.timers.tick(150);
     await new Promise((resolve) => setImmediate(resolve));
-    assert.equal(disk.sets.length, 1);
-    const written = JSON.parse(disk.sets[0]) as { progress: { contrat: { correct: string[] } }; schemaVersion: number; lang: string };
+    assert.equal(disk.sets.length, 2);
+    const written = JSON.parse(disk.sets[1]) as { progress: { contrat: { correct: string[] } }; schemaVersion: number; lang: string };
+    assert.equal(JSON.parse(disk.sets[0]).payload, fs.readFileSync(path.join(fixtureDir, 'legacy-without-version.json'), 'utf8'));
     assert.equal(written.schemaVersion, 1);
     assert.equal(written.lang, 'it');
     assert.deepEqual(written.progress.contrat.correct, ['contrat-1', 'contrat-3']);
-    const legacyView = rollbackRead(disk.sets[0], { lang: 'fr', progress: {}, mistakes: [] });
+    const legacyView = rollbackRead(disk.sets[1], { lang: 'fr', progress: {}, mistakes: [] });
     assert.deepEqual((legacyView?.progress as { contrat: { correct: string[] } }).contrat.correct, ['contrat-1', 'contrat-3']);
   } finally {
     mock.timers.reset();
@@ -188,23 +192,23 @@ test('a refused remove does not let the following language write replace the ori
     const sets: string[] = [];
     let removes = 0;
     let failRemoves = 1;
-    let disk = raw;
+    const data = new Map<string, string>([['rhmaster:v1', raw]]);
     const storage: PersistStorage = {
-      getItem() {
-        return Promise.resolve(disk);
+      getItem(key: string) {
+        return Promise.resolve(data.has(key) ? data.get(key)! : null);
       },
-      setItem(_key, value) {
+      setItem(key: string, value: string) {
         sets.push(value);
-        disk = value;
+        data.set(key, value);
         return Promise.resolve();
       },
-      removeItem() {
+      removeItem(key: string) {
         removes += 1;
         if (failRemoves > 0) {
           failRemoves -= 1;
           return Promise.reject(new Error('remove refused'));
         }
-        disk = '';
+        data.delete(key);
         return Promise.resolve();
       },
     };
@@ -215,9 +219,10 @@ test('a refused remove does not let the following language write replace the ori
     await drain();
     mock.timers.tick(1_000);
     await drain();
-    assert.equal(sets.length, 0);
+    assert.equal(sets.length, 1);
+    assert.equal(JSON.parse(sets[0]).payload, raw);
     assert.equal(removes, 1);
-    assert.equal(disk, raw);
+    assert.equal(data.get('rhmaster:v1'), raw);
     assert.equal(store.getResetPhase(), 'failed');
     assert.equal(store.isUnreadable(), false);
     assert.deepEqual(store.get().progress.temps?.correct, ['temps-1']);
@@ -226,8 +231,8 @@ test('a refused remove does not let the following language write replace the ori
     store.set({ lang: 'it' });
     mock.timers.tick(150);
     await drain();
-    assert.equal(sets.length, 1);
-    const written = JSON.parse(sets[0]) as {
+    assert.equal(sets.length, 2);
+    const written = JSON.parse(sets[1]) as {
       lang: string;
       futureNote: string;
       intervals: { 'temps-1': number };
@@ -237,7 +242,8 @@ test('a refused remove does not let the following language write replace the ori
     assert.deepEqual(written.progress.temps.correct, ['temps-1']);
     assert.equal(written.futureNote, 'clé inconnue à conserver');
     assert.equal(written.intervals['temps-1'], 4);
-    assert.equal(disk, sets[0]);
+    assert.equal(data.get('rhmaster:v1'), sets[1]);
+    assert.equal(JSON.parse(sets[0]).payload, raw);
   } finally {
     mock.timers.reset();
   }
@@ -251,19 +257,19 @@ test('a confirmed reset deletes only after removeItem resolves, and keeps the la
     const raw = JSON.stringify(nominal);
     const sets: string[] = [];
     let removes = 0;
-    let disk: string | null = raw;
+    const data = new Map<string, string>([['rhmaster:v1', raw]]);
     const storage: PersistStorage = {
-      getItem() {
-        return Promise.resolve(disk);
+      getItem(key: string) {
+        return Promise.resolve(data.has(key) ? data.get(key)! : null);
       },
-      setItem(_key, value) {
+      setItem(key: string, value: string) {
         sets.push(value);
-        disk = value;
+        data.set(key, value);
         return Promise.resolve();
       },
-      removeItem() {
+      removeItem(key: string) {
         removes += 1;
-        disk = null;
+        data.delete(key);
         return Promise.resolve();
       },
     };
@@ -273,16 +279,17 @@ test('a confirmed reset deletes only after removeItem resolves, and keeps the la
     confirmProgressReset(store);
     await drain();
     assert.equal(removes, 1);
-    assert.equal(disk, null);
-    assert.equal(sets.length, 0);
+    assert.equal(data.has('rhmaster:v1'), false);
+    assert.equal(sets.length, 1);
+    assert.equal(JSON.parse(sets[0]).payload, raw);
     assert.equal(store.getResetPhase(), 'done');
     mock.timers.tick(149);
     await drain();
-    assert.equal(sets.length, 0);
+    assert.equal(sets.length, 1);
     mock.timers.tick(1);
     await drain();
-    assert.equal(sets.length, 1);
-    const written = JSON.parse(sets[0]) as { lang: string; progress: Record<string, unknown>; futureNote?: string };
+    assert.equal(sets.length, 2);
+    const written = JSON.parse(sets[1]) as { lang: string; progress: Record<string, unknown>; futureNote?: string };
     assert.equal(written.lang, 'de');
     assert.deepEqual(written.progress, {});
     assert.equal(written.futureNote, undefined);
@@ -335,6 +342,34 @@ test('future and corrupt blobs stay untouched when reset is confirmed before the
       assert.equal(store.isUnreadable(), true);
       assert.equal(store.getRawBackup(), raw);
     }
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test('rollback restores the main key from the side copy and keeps that copy', async () => {
+  const { mock } = await import('node:test');
+  mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    const raw = fs.readFileSync(path.join(fixtureDir, 'legacy-without-version.json'), 'utf8');
+    const disk = fakeStorage(null);
+    const store = createPersistedStore('rhmaster:v1', initial, 8000, disk.storage, (value) => revise(value as Record<string, unknown>) as typeof initial | null);
+    disk.pending.resolve(raw);
+    await drain();
+    store.set({ lang: 'it' });
+    mock.timers.tick(150);
+    await drain();
+    assert.equal(disk.sets.length, 2);
+    const restored = await store.restoreSideCopy();
+    assert.equal(restored, 'restored');
+    assert.deepEqual(store.get().progress.contrat?.correct, ['contrat-1', 'contrat-3']);
+    assert.equal(store.get().lang, 'fr');
+    assert.equal(disk.sets.length, 3);
+    assert.equal(disk.sets[2], raw);
+    assert.equal(JSON.parse(disk.sets[0]).payload, raw);
+    const refused = await store.applyVerifiedRestore({ ...JSON.parse(disk.sets[0]), sha256: '0'.repeat(64) });
+    assert.equal(refused, 'rejected');
+    assert.equal(disk.sets.length, 3);
   } finally {
     mock.timers.reset();
   }

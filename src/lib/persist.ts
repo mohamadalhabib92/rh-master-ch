@@ -1,13 +1,29 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
+import {
+  buildProgressExport,
+  planRestore,
+  SIDE_KEY_SUFFIX,
+  verifyProgressExport,
+  type ProgressCounts,
+  type ProgressExportV1,
+} from './progress-export';
 
 export type HydrationPhase = 'pending' | 'ready' | 'timedOut';
 export type ResetPhase = 'idle' | 'pending' | 'done' | 'failed';
+
+export type HealthySummary = {
+  sha256: string;
+  counts: ProgressCounts;
+  sideReady: boolean;
+};
 
 export type DataStatus = {
   unreadable: boolean;
   rawBackup: string | null;
   resetPhase: ResetPhase;
+  /** Empreinte et comptes seulement. Jamais le JSON. */
+  healthy: HealthySummary | null;
 };
 
 export type PersistStorage = {
@@ -59,7 +75,11 @@ export function createPersistedStore<T extends object>(
   let writeBlocked = false;
   /** Dernier état adopté depuis une lecture réussie. Sert si la suppression échoue. */
   let adoptedSnapshot: T | null = null;
-  let dataStatus: DataStatus = { unreadable: false, rawBackup: null, resetPhase: 'idle' };
+  let dataStatus: DataStatus = { unreadable: false, rawBackup: null, resetPhase: 'idle', healthy: null };
+  /** Premiers octets sains lus. Ils ne sont pas réaffichés. */
+  let originalRaw: string | null = null;
+  let sideCopyReady = false;
+  const sideKey = `${key}${SIDE_KEY_SUFFIX}`;
   let pendingPatches: Patch<T>[] = [];
   let timer: ReturnType<typeof setTimeout> | null = null;
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -69,15 +89,49 @@ export function createPersistedStore<T extends object>(
 
   const canWrite = () => fulfilledGeneration === generation && !unreadable && !writeBlocked;
 
+  const healthySummary = (): HealthySummary | null => {
+    if (!originalRaw) return null;
+    const built = buildProgressExport(originalRaw);
+    if (!built) return null;
+    return { sha256: built.sha256, counts: built.counts, sideReady: sideCopyReady };
+  };
+
   const syncStatus = () => {
+    const healthy = healthySummary();
+    const sameHealthy =
+      dataStatus.healthy?.sha256 === healthy?.sha256 &&
+      dataStatus.healthy?.sideReady === healthy?.sideReady &&
+      dataStatus.healthy?.counts.correctIds === healthy?.counts.correctIds;
     if (
       dataStatus.unreadable === unreadable &&
       dataStatus.rawBackup === rawBackup &&
-      dataStatus.resetPhase === resetPhase
+      dataStatus.resetPhase === resetPhase &&
+      sameHealthy
     ) {
       return;
     }
-    dataStatus = { unreadable, rawBackup, resetPhase };
+    dataStatus = { unreadable, rawBackup, resetPhase, healthy };
+  };
+
+  const ensureSideCopy = async () => {
+    if (!originalRaw || sideCopyReady) return;
+    const envelope = buildProgressExport(originalRaw);
+    if (!envelope) return;
+    await storage.setItem(sideKey, JSON.stringify(envelope));
+    const back = await storage.getItem(sideKey);
+    let parsed: unknown = null;
+    try {
+      parsed = back ? JSON.parse(back) : null;
+    } catch {
+      parsed = null;
+    }
+    const checked = verifyProgressExport(parsed);
+    if (!checked.ok || checked.value.sha256 !== envelope.sha256 || checked.value.payload !== originalRaw) {
+      throw new Error('side-copy');
+    }
+    sideCopyReady = true;
+    syncStatus();
+    emit();
   };
 
   const clearHydrationTimer = () => {
@@ -122,7 +176,10 @@ export function createPersistedStore<T extends object>(
       saveTimer = null;
       if (genAt !== generation || !canWrite()) return;
       const payload = JSON.stringify(state);
-      enqueueWrite(() => storage.setItem(key, payload));
+      const needsSide = originalRaw != null && payload !== originalRaw && !sideCopyReady;
+      enqueueWrite(() =>
+        (needsSide ? ensureSideCopy() : Promise.resolve()).then(() => storage.setItem(key, payload)),
+      );
     }, SAVE_DELAY_MS);
   };
 
@@ -195,14 +252,17 @@ export function createPersistedStore<T extends object>(
     const genAt = generation;
     writeChain = writeChain.catch(() => undefined).then(() => {
       if (genAt !== generation || !canWrite()) return undefined;
-      return storage.removeItem(key).then(
-        () => {
-          after?.();
-        },
-        () => {
-          failDelete();
-        },
-      );
+      return ensureSideCopy()
+        .catch(() => undefined)
+        .then(() => storage.removeItem(key))
+        .then(
+          () => {
+            after?.();
+          },
+          () => {
+            failDelete();
+          },
+        );
     });
   };
 
@@ -270,6 +330,7 @@ export function createPersistedStore<T extends object>(
         }
         rawBackup = null;
         unreadable = false;
+        if (raw && originalRaw == null) originalRaw = raw;
         if (resetPhase === 'pending') resetPhase = 'idle';
         pendingPatches = [];
         state = { ...initial, ...adopted };
@@ -328,6 +389,64 @@ export function createPersistedStore<T extends object>(
     isUnreadable: () => unreadable,
     getRawBackup: () => rawBackup,
     getResetPhase: () => resetPhase,
+    /** Enveloppe de l'état sain d'origine. N'écrit pas et n'affiche pas le JSON. */
+    getHealthyExport(): ProgressExportV1 | null {
+      return originalRaw ? buildProgressExport(originalRaw) : null;
+    },
+    /**
+     * Relit la copie latérale, vérifie empreinte et comptes, réécrit la clé
+     * principale sans supprimer la copie.
+     */
+    restoreSideCopy(): Promise<'restored' | 'missing' | 'rejected'> {
+      return storage.getItem(sideKey).then((back) => {
+        let parsed: unknown = null;
+        try {
+          parsed = back ? JSON.parse(back) : null;
+        } catch {
+          parsed = null;
+        }
+        const plan = planRestore(parsed);
+        if (!plan.ok) return back ? 'rejected' : 'missing';
+        return storage.setItem(key, plan.payload).then(() => {
+          const value = JSON.parse(plan.payload) as Partial<T>;
+          const adopted = revise ? revise(value) : value;
+          if (!adopted) return 'rejected' as const;
+          state = { ...initial, ...adopted };
+          adoptedSnapshot = state;
+          sideCopyReady = true;
+          unreadable = false;
+          rawBackup = null;
+          writeBlocked = false;
+          fulfilledGeneration = generation;
+          phase = 'ready';
+          resetPhase = 'idle';
+          syncStatus();
+          emit();
+          return 'restored' as const;
+        });
+      });
+    },
+    /** Applique un export déjà vérifié. Refuse sans écrire si l'empreinte ne tient pas. */
+    applyVerifiedRestore(input: unknown): Promise<'restored' | 'rejected'> {
+      const plan = planRestore(input);
+      if (!plan.ok) return Promise.resolve('rejected');
+      return storage.setItem(key, plan.payload).then(() => {
+        const value = JSON.parse(plan.payload) as Partial<T>;
+        const adopted = revise ? revise(value) : value;
+        if (!adopted) return 'rejected' as const;
+        state = { ...initial, ...adopted };
+        adoptedSnapshot = state;
+        unreadable = false;
+        rawBackup = null;
+        writeBlocked = false;
+        fulfilledGeneration = generation;
+        phase = 'ready';
+        resetPhase = 'idle';
+        syncStatus();
+        emit();
+        return 'restored' as const;
+      });
+    },
     /** Relance la lecture. Annule toute écriture encore armée. N'écrit rien. */
     retryHydration() {
       hydrate();

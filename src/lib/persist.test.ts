@@ -24,13 +24,16 @@ function fakeStorage() {
   const pending: ReturnType<typeof deferred<string | null>>[] = [];
   const sets: string[] = [];
   const removes = { n: 0 };
+  const side = new Map<string, string>();
   const storage: PersistStorage = {
-    getItem() {
+    getItem(key: string) {
+      if (key.endsWith(':before-rewrite')) return Promise.resolve(side.get(key) ?? null);
       const job = deferred<string | null>();
       pending.push(job);
       return job.promise;
     },
-    setItem(_key, value) {
+    setItem(key: string, value: string) {
+      if (key.endsWith(':before-rewrite')) side.set(key, value);
       sets.push(value);
       return Promise.resolve();
     },
@@ -39,7 +42,7 @@ function fakeStorage() {
       return Promise.resolve();
     },
   };
-  return { storage, pending, sets, removes };
+  return { storage, pending, sets, removes, side };
 }
 
 const initial = { lang: 'fr', progress: {} as Record<string, { best: number }>, extra: 0 };
@@ -81,8 +84,11 @@ test('continue offline does not write until getItem succeeds, then replays onto 
 
     mock.timers.tick(150);
     await drain();
-    assert.equal(sets.length, 1);
-    assert.deepEqual(JSON.parse(sets[0]), {
+    assert.equal(sets.length, 2);
+    const side = JSON.parse(sets[0]) as { payload: string; sha256: string };
+    assert.equal(side.payload, JSON.stringify(saved));
+    assert.equal(side.sha256.length, 64);
+    assert.deepEqual(JSON.parse(sets[1]), {
       lang: 'it',
       progress: { contrat: { best: 80 }, salaire: { best: 10 } },
       extra: 5,
@@ -122,8 +128,8 @@ test('reset before a successful read does not delete the blob that arrives later
     mock.timers.tick(150);
     await drain();
     assert.equal(removes.n, 0);
-    assert.equal(sets.length, 1);
-    const written = JSON.parse(sets[0]) as { lang: string; progress: { contrat: { best: number } }; extra: number; futureNote: string };
+    assert.equal(sets.length, 2);
+    const written = JSON.parse(sets[1]) as { lang: string; progress: { contrat: { best: number } }; extra: number; futureNote: string };
     assert.equal(written.lang, 'it');
     assert.equal(written.extra, 9);
     assert.equal(written.progress.contrat.best, 80);
@@ -245,11 +251,14 @@ test('reset after a successful read removes the key and saves only the later pat
     await drain();
     store.reset();
     store.set({ lang: 'it' });
-    mock.timers.tick(150);
     await drain();
     assert.equal(removes.n, 1);
     assert.equal(sets.length, 1);
-    assert.deepEqual(JSON.parse(sets[0]), { lang: 'it', progress: {}, extra: 0 });
+    mock.timers.tick(150);
+    await drain();
+    assert.equal(sets.length, 2);
+    assert.equal(JSON.parse(sets[0]).payload, JSON.stringify(saved));
+    assert.deepEqual(JSON.parse(sets[1]), { lang: 'it', progress: {}, extra: 0 });
   } finally {
     mock.timers.reset();
   }
@@ -268,8 +277,9 @@ test('after a successful read, set persists the merged state', async () => {
     store.set((s) => ({ extra: s.extra + 1 }));
     mock.timers.tick(150);
     await drain();
-    assert.equal(sets.length, 1);
-    assert.deepEqual(JSON.parse(sets[0]), { ...saved, extra: 5 });
+    assert.equal(sets.length, 2);
+    assert.equal(JSON.parse(sets[0]).payload, JSON.stringify(saved));
+    assert.deepEqual(JSON.parse(sets[1]), { ...saved, extra: 5 });
   } finally {
     mock.timers.reset();
   }
