@@ -6,7 +6,7 @@ import type { Module } from '../data/types';
 import { pick } from '../data/types';
 import { useI18n } from '../lib/i18n';
 import { appStore } from '../lib/store';
-import { colors, radius } from '../theme';
+import { useTheme } from '../theme-context';
 import { Badge, Card, H3, Muted, ProgressBar, Row } from './ui';
 
 export function moduleRatio(m: Module, correct: string[] | undefined) {
@@ -15,6 +15,7 @@ export function moduleRatio(m: Module, correct: string[] | undefined) {
 
 export function ModuleCard({ m }: { m: Module }) {
   const { t, lang } = useI18n();
+  const theme = useTheme();
   const s = appStore.useStore();
   const p = s.progress[m.id];
   const ratio = moduleRatio(m, p?.correct);
@@ -22,8 +23,8 @@ export function ModuleCard({ m }: { m: Module }) {
   return (
     <Card onPress={() => router.push(`/module/${m.id}`)} accessibilityLabel={pick(m.title, lang).value}>
       <Row gap={12} style={{ alignItems: 'flex-start' }}>
-        <View style={{ width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
-          <Ionicons name={m.icon as keyof typeof Ionicons.glyphMap} size={22} color={colors.primaryText} />
+        <View style={{ width: 48, height: 48, borderRadius: theme.radius.md, backgroundColor: theme.palette.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name={m.icon as keyof typeof Ionicons.glyphMap} size={22} color={theme.palette.primaryText} />
         </View>
         <View style={{ flex: 1, gap: 4 }}>
           <Muted>{t('module', { n: m.n })}</Muted>
@@ -34,7 +35,7 @@ export function ModuleCard({ m }: { m: Module }) {
           </Row>
         </View>
       </Row>
-      <ProgressBar value={ratio} color={ratio >= 1 ? colors.ok : colors.primary} />
+      <ProgressBar value={ratio} color={ratio >= 1 ? theme.palette.ok : theme.palette.primary} />
     </Card>
   );
 }

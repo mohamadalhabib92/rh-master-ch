@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { colors, radius } from '../theme';
+import { useTheme } from '../theme-context';
 
 export function Field({
   label,
@@ -19,26 +19,27 @@ export function Field({
   keyboard?: 'decimal-pad' | 'default' | 'numbers-and-punctuation';
   placeholder?: string;
 }) {
+  const theme = useTheme();
   return (
     <View style={{ gap: 4, flexGrow: 1, flexBasis: 220 }}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { color: theme.palette.text }]}>{label}</Text>
       <TextInput
         accessibilityLabel={label}
         value={value}
         onChangeText={onChange}
         keyboardType={keyboard}
         placeholder={placeholder}
-        placeholderTextColor={colors.muted}
-        style={[styles.input, error ? { borderColor: colors.danger } : null]}
+        placeholderTextColor={theme.palette.muted}
+        style={[styles.input, { color: theme.palette.text, borderColor: error ? theme.palette.danger : theme.palette.border, backgroundColor: theme.palette.surface, borderRadius: theme.radius.md }]}
       />
-      {error ? <Text style={styles.err}>{error}</Text> : hint ? <Text style={styles.hint}>{hint}</Text> : null}
+      {error ? <Text style={[styles.err, { color: theme.palette.danger }]}>{error}</Text> : hint ? <Text style={[styles.hint, { color: theme.palette.warnText }]}>{hint}</Text> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  label: { fontSize: 13, fontWeight: '600', color: colors.text },
-  input: { minHeight: 44, borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, paddingHorizontal: 12, fontSize: 16, color: colors.text, backgroundColor: colors.surface },
-  err: { fontSize: 12, color: colors.danger },
-  hint: { fontSize: 11.5, color: '#8A5A00' },
+  label: { fontSize: 13, fontWeight: '600' },
+  input: { minHeight: 48, borderWidth: 1, paddingHorizontal: 12, fontSize: 16 },
+  err: { fontSize: 12 },
+  hint: { fontSize: 12 },
 });

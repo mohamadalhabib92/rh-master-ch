@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Lang } from '../i18n/strings';
-import { adoptLearningRecord, LEARNING_SCHEMA_VERSION, LEARNING_STORAGE_KEY } from './learning-state';
+import { emptyLearn, reviseStoredLearning, type LearnBlob } from './learn-state';
+import { LEARNING_SCHEMA_VERSION, LEARNING_STORAGE_KEY } from './learning-state';
 import { createPersistedStore } from './persist';
 
 export type ModuleProgress = { best: number; attempts: number; correct: string[]; lastAt: number };
@@ -13,12 +14,14 @@ export type AppState = {
   mistakes: string[];
   lastModule: string | null;
   disclaimerSeen: boolean;
+  /** Ajouté par migration. N'efface pas la progression historique. */
+  learn: LearnBlob;
 };
 
 function reviseAppState(value: Partial<AppState>): Partial<AppState> | null {
-  const adopted = adoptLearningRecord(value as Record<string, unknown>);
-  if (!adopted.ok) return null;
-  return adopted.record as Partial<AppState>;
+  const next = reviseStoredLearning(value as Record<string, unknown>);
+  if (!next) return null;
+  return next as Partial<AppState>;
 }
 
 export const appStore = createPersistedStore<AppState>(
@@ -31,6 +34,7 @@ export const appStore = createPersistedStore<AppState>(
     mistakes: [],
     lastModule: null,
     disclaimerSeen: false,
+    learn: emptyLearn(),
   },
   8000,
   AsyncStorage,

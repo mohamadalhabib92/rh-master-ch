@@ -4,23 +4,41 @@ import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { BootGate } from '../components/BootGate';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { Onboarding } from '../components/Onboarding';
 import { I18nProvider } from '../lib/i18n';
-import { colors } from '../theme';
+import { ThemeProvider, useTheme } from '../theme-context';
+
+function Shell() {
+  const theme = useTheme();
+  return (
+    <BootGate>
+      <StatusBar style={theme.dark ? 'light' : 'dark'} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.palette.bg } }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="module/[id]" />
+        <Stack.Screen name="quiz/[id]" />
+        <Stack.Screen name="lesson/[id]" />
+        <Stack.Screen name="drill/[id]" />
+        <Stack.Screen name="case/[id]" />
+        <Stack.Screen name="mock/[id]" />
+        <Stack.Screen name="cards" />
+        <Stack.Screen name="focus" />
+        <Stack.Screen name="plan" />
+        <Stack.Screen name="disclaimer" options={{ presentation: 'modal' }} />
+      </Stack>
+      <Onboarding />
+    </BootGate>
+  );
+}
 
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ErrorBoundary>
         <I18nProvider>
-          <BootGate>
-            <StatusBar style="dark" />
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="module/[id]" />
-              <Stack.Screen name="quiz/[id]" />
-              <Stack.Screen name="disclaimer" options={{ presentation: 'modal' }} />
-            </Stack>
-          </BootGate>
+          <ThemeProvider>
+            <Shell />
+          </ThemeProvider>
         </I18nProvider>
       </ErrorBoundary>
     </SafeAreaProvider>
