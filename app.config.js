@@ -61,8 +61,10 @@ module.exports = ({ config }) => {
   }
   return {
     ...config,
+    plugins: [...(config.plugins || []), './plugins/with-ipad-mac.js'],
     ios: {
       ...config.ios,
+      supportsTablet: true,
       bundleIdentifier: IOS_BUNDLE_ID,
       buildNumber: config.ios?.buildNumber || IPHONE_BUILD,
     },

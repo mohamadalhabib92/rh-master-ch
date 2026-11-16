@@ -1,8 +1,10 @@
 import { Platform } from 'react-native';
+import { allowsHaptics } from './mac-layout';
+import { isMacApp } from './mac-runtime';
 import { appStore } from './store';
 
 async function pulse(kind: 'select' | 'success' | 'warn') {
-  if (Platform.isTV) return;
+  if (!allowsHaptics({ tv: Platform.isTV, mac: isMacApp() })) return;
   const settings = appStore.get().learn?.settings;
   if (!settings?.haptics || settings.reduceMotion || settings.celebrations === 'off') return;
   if (Platform.OS === 'web') return;

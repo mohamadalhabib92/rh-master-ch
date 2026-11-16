@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme-context';
 import { hit, space as spaceScale } from '../theme';
+import { useMacItem, useMacScroll } from './MacBridge';
 
 export function Screen({
   children,
@@ -34,8 +35,14 @@ export function Screen({
   calm?: boolean;
 }) {
   const theme = useTheme();
+  const scroller = useRef<{ scrollTo: (options: { y: number; animated?: boolean }) => void } | null>(null);
+  const scrollTo = React.useCallback(
+    (y: number) => scroller.current?.scrollTo({ y: Math.max(0, y - 40), animated: !theme.reduceMotion }),
+    [theme.reduceMotion],
+  );
+  useMacScroll(scrollTo);
   const inner = scroll ? (
-    <ScrollView contentContainerStyle={[styles.content, contentStyle]} keyboardShouldPersistTaps="handled">
+    <ScrollView ref={scroller as never} contentContainerStyle={[styles.content, contentStyle]} keyboardShouldPersistTaps="handled">
       <View style={[styles.maxWidth, { maxWidth: theme.maxWidth, gap: theme.space.md }]}>{children}</View>
     </ScrollView>
   ) : (
@@ -102,6 +109,9 @@ export function Card({
   accessibilityLabel?: string;
 }) {
   const theme = useTheme();
+  const macItem = useMacItem(!!onPress && theme.mac);
+  macItem.setPress(onPress);
+  const [hover, setHover] = useState(false);
   const cardStyle = {
     backgroundColor: theme.palette.surface,
     borderRadius: theme.radius.lg,
@@ -118,10 +128,15 @@ export function Card({
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         onPress={onPress}
+        onHoverIn={theme.mac ? () => setHover(true) : undefined}
+        onHoverOut={theme.mac ? () => setHover(false) : undefined}
+        onLayout={(event) => macItem.onLayout(event.nativeEvent.layout.y)}
         style={({ pressed }) => [
           styles.card,
           cardStyle,
           pressed && !theme.reduceMotion ? { opacity: 0.94, transform: [{ scale: 0.985 }] } : null,
+          theme.mac && hover && !macItem.focused ? { borderColor: theme.palette.accent, shadowOpacity: 0.2 } : null,
+          macItem.focused ? { borderColor: theme.palette.accent, borderWidth: 3, shadowColor: theme.palette.accent, shadowOpacity: 0.45, shadowRadius: 12 } : null,
           style,
         ]}
       >
@@ -150,6 +165,9 @@ export function Button({
   small?: boolean;
 }) {
   const theme = useTheme();
+  const macItem = useMacItem(!!onPress && !disabled && theme.mac);
+  macItem.setPress(onPress);
+  const [hover, setHover] = useState(false);
   const bg =
     variant === 'primary' ? theme.palette.primary : variant === 'secondary' ? theme.palette.primarySoft : variant === 'danger' ? theme.palette.danger : 'transparent';
   const fg = variant === 'primary' || variant === 'danger' ? theme.palette.onPrimary : theme.palette.primaryText;
@@ -160,16 +178,20 @@ export function Button({
       accessibilityState={{ disabled: !!disabled }}
       disabled={disabled}
       onPress={onPress}
+      onHoverIn={theme.mac ? () => setHover(true) : undefined}
+      onHoverOut={theme.mac ? () => setHover(false) : undefined}
+      onLayout={(event) => macItem.onLayout(event.nativeEvent.layout.y)}
       style={({ pressed }) => [
         styles.button,
         small && { paddingHorizontal: theme.space.md, minHeight: 44 },
         {
           backgroundColor: bg,
           borderRadius: theme.radius.md,
-          opacity: disabled ? 0.45 : pressed ? 0.9 : 1,
+          opacity: disabled ? 0.45 : pressed ? 0.9 : theme.mac && hover ? 0.88 : 1,
           transform: pressed && !theme.reduceMotion && !disabled ? [{ scale: 0.985 }] : undefined,
         },
         variant === 'ghost' && { borderWidth: 1, borderColor: theme.palette.border },
+        macItem.focused ? { borderWidth: 3, borderColor: '#FFFFFF' } : null,
         style,
       ]}
     >

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DisclaimerBanner } from '../../components/Disclaimer';
@@ -8,6 +8,7 @@ import { Card, EmptyState, H1, Muted, Row } from '../../components/ui';
 import { GLOSSARY, normalize } from '../../data/glossary';
 import { useI18n } from '../../lib/i18n';
 import { useDebounced } from '../../lib/useDebounced';
+import { onGlossaryFind } from '../../lib/mac-runtime';
 import { space } from '../../theme';
 import { useTheme } from '../../theme-context';
 
@@ -15,6 +16,7 @@ export default function Glossary() {
   const { t, lang } = useI18n();
   const theme = useTheme();
   const [q, setQ] = useState('');
+  const inputRef = useRef<{ focus: () => void } | null>(null);
   const dq = useDebounced(q, 250);
   const index = useMemo(() => GLOSSARY.map((g) => ({ g, hay: normalize([g.fr, g.de, g.it, g.en, g.def].join(' | ')) })), []);
   const list = useMemo(() => {
@@ -23,11 +25,15 @@ export default function Glossary() {
     return index.filter((x) => x.hay.includes(n)).map((x) => x.g);
   }, [dq, index]);
   const others = (['fr', 'de', 'it', 'en'] as const).filter((l) => l !== lang);
+  useEffect(() => onGlossaryFind(() => inputRef.current?.focus()), []);
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.palette.bg }}>
       <FlatList
         data={list}
         keyExtractor={(g) => g.id}
+        numColumns={theme.columns}
+        key={theme.columns}
+        columnWrapperStyle={theme.columns === 2 ? { gap: 12 } : undefined}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ padding: space.lg, gap: space.md, paddingBottom: 48, width: '100%', maxWidth: theme.maxWidth, alignSelf: 'center' }}
         ListHeaderComponent={
@@ -37,6 +43,7 @@ export default function Glossary() {
             <View style={[styles.search, { backgroundColor: theme.palette.surface, borderColor: theme.palette.border, borderRadius: theme.radius.md }]}>
               <Ionicons name="search" size={18} color={theme.palette.muted} />
               <TextInput
+                ref={inputRef as never}
                 value={q}
                 onChangeText={setQ}
                 placeholder={t('glossarySearch')}

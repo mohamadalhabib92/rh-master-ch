@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { AccessibilityInfo, Platform, useWindowDimensions } from 'react-native';
 import { appStore } from './lib/store';
-import { columnCount, contentMaxWidth, motion, paletteFor, radius, space, type, type Palette } from './theme';
+import { columnCount, contentMaxWidth, macType, motion, paletteFor, radius, sidebarFor, space, type as phoneType, type Palette } from './theme';
+import { isMacApp } from './lib/mac-runtime';
 
 export type Theme = {
   palette: Palette;
@@ -9,9 +10,11 @@ export type Theme = {
   contrast: 'default' | 'high';
   reduceMotion: boolean;
   dyslexia: boolean;
+  mac: boolean;
+  sidebar: boolean;
   space: typeof space;
   radius: typeof radius;
-  type: typeof type;
+  type: typeof phoneType;
   motion: typeof motion;
   maxWidth: number;
   columns: 1 | 2;
@@ -26,7 +29,11 @@ const ThemeContext = createContext<Theme | null>(null);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const settings = appStore.useStore().learn.settings;
   const { width } = useWindowDimensions();
+  const [mac, setMac] = useState(false);
   const [osReduce, setOsReduce] = useState(false);
+  useEffect(() => {
+    setMac(isMacApp());
+  }, []);
   useEffect(() => {
     let alive = true;
     let sub: { remove?: () => void } | undefined;
@@ -47,24 +54,27 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
   const value = useMemo<Theme>(() => {
     const dyslexia = settings.dyslexiaFont;
+    const text = mac ? macType : phoneType;
     return {
       palette: paletteFor(settings.dark, settings.contrast),
       dark: settings.dark,
       contrast: settings.contrast,
       reduceMotion: settings.reduceMotion || osReduce,
       dyslexia,
+      mac,
+      sidebar: sidebarFor(width),
       space,
       radius,
-      type,
+      type: text,
       motion,
       maxWidth: contentMaxWidth(width),
       columns: columnCount(width),
       width,
       fontFamily: dyslexia && Platform.OS === 'web' ? 'Verdana, Geneva, sans-serif' : undefined,
-      bodyLine: dyslexia ? 28 : type.body.lineHeight,
+      bodyLine: dyslexia ? 28 : text.body.lineHeight,
       letterSpacing: dyslexia ? 0.4 : 0,
     };
-  }, [osReduce, settings.contrast, settings.dark, settings.dyslexiaFont, settings.reduceMotion, width]);
+  }, [mac, osReduce, settings.contrast, settings.dark, settings.dyslexiaFont, settings.reduceMotion, width]);
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 

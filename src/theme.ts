@@ -2,6 +2,8 @@
  * Jetons du design system. Les écrans lisent la palette via useTheme(),
  * pas ces constantes figées, sauf repli hors provider.
  */
+import { layoutForWidth } from './lib/mac-layout';
+
 export type Palette = {
   bg: string;
   bgElevated: string;
@@ -121,6 +123,15 @@ export const type = {
   small: { fontSize: 13, lineHeight: 18, fontWeight: '500' as const },
 };
 
+export const macType = {
+  display: { fontSize: 40, lineHeight: 48, fontWeight: '800' as const, letterSpacing: -0.6 },
+  h1: { fontSize: 34, lineHeight: 42, fontWeight: '800' as const, letterSpacing: -0.4 },
+  h2: { fontSize: 26, lineHeight: 34, fontWeight: '700' as const, letterSpacing: -0.2 },
+  h3: { fontSize: 20, lineHeight: 28, fontWeight: '700' as const },
+  body: { fontSize: 18, lineHeight: 28, fontWeight: '400' as const },
+  small: { fontSize: 15, lineHeight: 22, fontWeight: '500' as const },
+};
+
 export const motion = { fast: 160, base: 240, slow: 420 };
 
 export function paletteFor(dark: boolean, contrast: 'default' | 'high'): Palette {
@@ -131,11 +142,13 @@ export function paletteFor(dark: boolean, contrast: 'default' | 'high'): Palette
 }
 
 export function contentMaxWidth(width: number): number {
-  if (width >= 1100) return 1080;
-  if (width >= 760) return 920;
-  return 720;
+  return layoutForWidth(width).maxWidth;
 }
 
 export function columnCount(width: number): 1 | 2 {
-  return width >= 900 ? 2 : 1;
+  return layoutForWidth(width).columns;
+}
+
+export function sidebarFor(width: number): boolean {
+  return layoutForWidth(width).sidebar;
 }

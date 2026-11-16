@@ -5,6 +5,7 @@ import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { BootGate } from '../components/BootGate';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { MacBridge } from '../components/MacBridge';
 import { Onboarding } from '../components/Onboarding';
 import { I18nProvider } from '../lib/i18n';
 import { ThemeProvider, useTheme } from '../theme-context';
@@ -26,6 +27,7 @@ function Shell() {
   return (
     <BootGate>
       <StatusBar style={theme.dark ? 'light' : 'dark'} />
+      <MacBridge>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.palette.bg } }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="module/[id]" />
@@ -40,6 +42,7 @@ function Shell() {
         <Stack.Screen name="disclaimer" options={{ presentation: 'modal' }} />
       </Stack>
       <Onboarding />
+      </MacBridge>
     </BootGate>
   );
 }

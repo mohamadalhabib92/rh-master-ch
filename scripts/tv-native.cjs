@@ -5,7 +5,7 @@
  * expo-haptics et expo-speech n’ont pas de place sur le salon : le focus est
  * visuel, le texte est à l’écran. expo-router est patché à part.
  */
-const TV_AUTOLINK_EXCLUDE = ['expo-haptics', 'expo-speech'];
+const TV_AUTOLINK_EXCLUDE = ['expo-haptics', 'expo-speech', 'rh-mac-input'];
 
 /** Les xcframework Maven sont le cœur iOS upstream, pas le fork tvOS. */
 const TV_RN_CORE_FROM_SOURCE = '0';

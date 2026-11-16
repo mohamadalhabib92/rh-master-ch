@@ -64,7 +64,7 @@ export default function Settings() {
           <Chip label={t('highContrast')} active={settings.contrast === 'high'} onPress={() => updateLearnSettings({ contrast: settings.contrast === 'high' ? 'default' : 'high' })} />
           <Chip label={t('dyslexiaFont')} active={settings.dyslexiaFont} onPress={() => updateLearnSettings({ dyslexiaFont: !settings.dyslexiaFont })} />
           <Chip label={t('reduceMotion')} active={settings.reduceMotion} onPress={() => updateLearnSettings({ reduceMotion: !settings.reduceMotion })} />
-          <Chip label={t('haptics')} active={settings.haptics} onPress={() => updateLearnSettings({ haptics: !settings.haptics })} />
+          {theme.mac ? null : <Chip label={t('haptics')} active={settings.haptics} onPress={() => updateLearnSettings({ haptics: !settings.haptics })} />}
           <Chip label={settings.reminder === 'gentle' ? t('reminderGentle') : t('reminderOff')} active={settings.reminder === 'gentle'} onPress={() => updateLearnSettings({ reminder: settings.reminder === 'gentle' ? 'off' : 'gentle' })} />
         </Row>
         <Muted>{t('celebrations')}</Muted>

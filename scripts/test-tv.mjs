@@ -109,7 +109,12 @@ test('Podfile is tvOS 16.4, compiles RN from source, and excludes haptics and sp
   const next = patchPodfileSource(sample);
   assert.match(next, /platform :tvos, '16.4'/);
   assert.match(next, /RCT_USE_PREBUILT_RNCORE'\] = '0'/);
-  assert.match(next, /use_expo_modules!\(exclude: \['expo-haptics', 'expo-speech'\]\)/);
+  const { TV_AUTOLINK_EXCLUDE } = require(path.join(root, 'scripts/tv-native.cjs'));
+  const list = TV_AUTOLINK_EXCLUDE.map((name) => `'${name}'`).join(', ');
+  assert.match(next, new RegExp(`use_expo_modules!\\(exclude: \\[${list}\\]\\)`));
+  assert.ok(TV_AUTOLINK_EXCLUDE.includes('expo-haptics'));
+  assert.ok(TV_AUTOLINK_EXCLUDE.includes('expo-speech'));
+  assert.ok(TV_AUTOLINK_EXCLUDE.includes('rh-mac-input'));
   assert.match(next, /TVOS_DEPLOYMENT_TARGET'\] = '16.4'/);
   const plist = '<key>CFBundleVersion</key>\n    <string>1</string>';
   assert.match(forceBundleVersion(plist), new RegExp(`<string>${TV_BUNDLE_VERSION}</string>`));

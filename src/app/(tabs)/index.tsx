@@ -21,8 +21,12 @@ export default function Home() {
   const done = MODULES.reduce((a, m) => a + (s.progress[m.id]?.correct.length ?? 0), 0);
   const last = findModule(s.lastModule ?? undefined);
   const next = last ?? MODULES.find((m) => (s.progress[m.id]?.correct.length ?? 0) < m.questions.length) ?? MODULES[0];
+  const wide = theme.columns === 2;
+  const pane = { width: wide ? '48%' : '100%', gap: 16 } as const;
   return (
     <Screen>
+      <View style={{ flexDirection: wide ? 'row' : 'column', flexWrap: 'wrap', gap: 16 }}>
+        <View style={pane}>
       <View style={[styles.hero, { backgroundColor: theme.palette.heroStart, borderRadius: theme.radius.lg }]}>
         <Row>
           <View style={styles.flag}>
@@ -40,19 +44,21 @@ export default function Home() {
           icon={<Ionicons name="play" size={16} color={theme.palette.primaryText} />}
           style={{ alignSelf: 'flex-start', marginTop: 4 }}
         />
-      </View>
-      <DisclaimerBanner />
-      <RawBackupNotice />
-      <Card>
-        <Row style={{ justifyContent: 'space-between' }}>
-          <H2>{t('overallProgress')}</H2>
-          <Muted>{Math.round((done / total) * 100)} %</Muted>
-        </Row>
-        <ProgressBar value={done / total} height={8} />
-        <Muted>
-          {t('questionsDone', { n: done, t: total })} · {t('modulesCount', { n: MODULES.length })}
-        </Muted>
-      </Card>
+        </View>
+        <DisclaimerBanner />
+        <RawBackupNotice />
+        <Card>
+          <Row style={{ justifyContent: 'space-between' }}>
+            <H2>{t('overallProgress')}</H2>
+            <Muted>{Math.round((done / total) * 100)} %</Muted>
+          </Row>
+          <ProgressBar value={done / total} height={8} />
+          <Muted>
+            {t('questionsDone', { n: done, t: total })} · {t('modulesCount', { n: MODULES.length })}
+          </Muted>
+        </Card>
+        </View>
+        <View style={pane}>
       {last ? <ModuleCard m={last} /> : null}
       {FEATURE_NEWS && NEWS.length > 0 ? (
         <Card>
@@ -78,6 +84,8 @@ export default function Home() {
       <Card>
         <SourcesList />
       </Card>
+        </View>
+      </View>
     </Screen>
   );
 }
