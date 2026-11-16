@@ -29,6 +29,10 @@ Avant la première réécriture d'un état sain, une copie est écrite sous `rhm
 
 `vacation(4, 12, 50)` renvoie 20 jours : le taux d'activité n'est pas appliqué. Ce n'est pas une règle de temps partiel. Ne pas diviser les jours par deux sans source. Détail dans le backlog du contrat.
 
+## Parcours ajouté ensuite
+
+`docs/curriculum-map.md` rattache des leçons originales aux deux examens. Ce n'est pas une validation des 137 questions, qui restent non reliées. Les chiffres datés sont dans `src/curriculum/figures-data.ts`. `figureReview` signale l'année dépassée et tout ce qui est `a_verifier`. La clé de progression reste `rhmaster:v1`. Une `schemaVersion` supérieure à 1 n'est toujours pas réécrite. Le champ `learn` est ajouté sans retirer les identifiants déjà réussis.
+
 ## Voir le résultat sans build payant
 
 Depuis la racine du dépôt :
