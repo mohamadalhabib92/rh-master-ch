@@ -1,6 +1,7 @@
-import { Stack } from 'expo-router';
+import { Redirect, Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
+import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { BootGate } from '../components/BootGate';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -10,6 +11,18 @@ import { ThemeProvider, useTheme } from '../theme-context';
 
 function Shell() {
   const theme = useTheme();
+  const path = usePathname();
+  if (Platform.isTV) {
+    return (
+      <BootGate>
+        <StatusBar hidden />
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.palette.bg } }}>
+          <Stack.Screen name="tv" />
+        </Stack>
+        {path.startsWith('/tv') ? null : <Redirect href="/tv" />}
+      </BootGate>
+    );
+  }
   return (
     <BootGate>
       <StatusBar style={theme.dark ? 'light' : 'dark'} />
