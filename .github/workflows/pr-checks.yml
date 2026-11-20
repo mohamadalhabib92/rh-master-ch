@@ -1,0 +1,31 @@
+# Typecheck, tests et export web sur chaque push et chaque pull request.
+# Pas de déploiement (main seul publie la PWA), pas de secrets, pas d'EAS.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm test
+      - run: npx expo export -p web
+        env:
+          CI: true
+          EXPO_NO_TELEMETRY: '1'

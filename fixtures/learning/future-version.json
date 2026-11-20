@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 2,
+  "lang": "fr",
+  "ficheRead": { "fin": true },
+  "progress": {
+    "fin": { "best": 60, "attempts": 3, "correct": ["fin-1", "fin-2"], "lastAt": 1700000003000 }
+  },
+  "mistakes": ["fin-4"],
+  "lastModule": "fin",
+  "disclaimerSeen": true,
+  "intervals": { "fin-1": 7 }
+}

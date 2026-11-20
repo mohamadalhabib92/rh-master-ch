@@ -1,0 +1,99 @@
+{
+  "contractVersion": 1,
+  "consultedAt": "2026-11-07",
+  "mappedQuestionCount": 0,
+  "alignment": "non_evalue",
+  "alignmentReason": "Aucune question de l'app n'est rattachée à une compétence. Le faire à partir du titre d'un module serait une attribution inventée.",
+  "tracks": [
+    {
+      "id": "hrse-certificat-gestionnaire-rh",
+      "kind": "certificat_association",
+      "federal": false,
+      "title": "Gestionnaire RH avec certificat HRSE",
+      "notTheSameAs": "brevet-federal-specialiste-rh",
+      "documents": [
+        {
+          "role": "reglement_signe",
+          "url": "https://www.hrse.ch/download/pictures/1b/xjs3sqxoucbfv5qbh8eiqw99dbhjma/hrse-reglement_zp_2026_valable_a_partir_examen_septembre_2026_sign.pdf",
+          "sha256": "a7e8943ae098f45f48f70bfd827ccbab32da23d47854bfdb03db615e2c232156",
+          "cover": "Règlement 2020 de l'examen de certificat de Gestionnaire RH, version mars 2026",
+          "read": "Article 5 : une épreuve en ligne, 3 h, quatre matières. Article 9 : approuvé par le comité HRSE le 24 mars 2026, en vigueur le 1er avril 2026, remplace le règlement précédent. Page 11 signée à Zurich le 24 mars 2026.",
+          "weightsInThisDocument": [
+            { "id": "management", "label": "Bases du management en Ressources Humaines", "pointsPercent": 10 },
+            { "id": "admin", "label": "Gestion administrative du personnel", "pointsPercent": 30 },
+            { "id": "pay", "label": "Gestion des salaires et assurances sociales", "pointsPercent": 35 },
+            { "id": "labour", "label": "Principes de base en droit du travail", "pointsPercent": 25 }
+          ]
+        },
+        {
+          "role": "directives_liees_sur_la_page_examen",
+          "url": "https://www.hrse.ch/download/pictures/44/r4xewmf637xypfwzdiugebq6uk8s0v/hrse_directives_examen_de_certificat_des_2022.pdf",
+          "sha256": "6cbc7cefddb971a6545d45da83c2cf9bf60be52147dc95ac5473a659ed00e0f2",
+          "cover": "La couverture et le pied de page disent Version 2020. La dernière ligne lue est Zurich, le 1er juillet 2020. Le nom de fichier public contient 2022.",
+          "read": "Le règlement mars 2026 dit que les directives détaillent la matière et sont modifiables en tout temps. Ce PDF n'est donc pas figé comme seule directive applicable."
+        },
+        {
+          "role": "publication_session",
+          "url": "https://www.hrse.ch/download/pictures/54/evtqs8oefwp0si1jbfg0zq96xs033b/hrse-publication_et_conditions_generales_mars_2027.pdf",
+          "sha256": "f1ae20fd2acdbfc7593656d23a4a8a0d0b34cd561549325b7c264095e90853b1",
+          "cover": "Publication et conditions générales, certificat de Gestionnaire RH, examen de mars 2027",
+          "read": "Ce PDF dit que pour mars 2027 sont valables le règlement d'examen 2020 (version avril 2025) et les directives d'examen 2020 (juillet 2020). Il ne cite pas la version mars 2026."
+        }
+      ],
+      "ambiguities": [
+        "Le règlement signé version mars 2026 dit entrer en vigueur le 1er avril 2026 et remplacer le précédent. Le nom de fichier dit « valable à partir examen septembre 2026 ». La publication de la session de mars 2027 cite encore « règlement 2020 (version avril 2025) » et « directives 2020 (juillet 2020) ». La version applicable à une session donnée n'est pas tranchée par ces trois documents.",
+        "Le fichier de directives lié sur la page d'examen a un nom contenant 2022, mais le texte interne est daté du 1er juillet 2020 et titré Version 2020.",
+        "Les pondérations 10 / 30 / 35 / 25 sont celles de l'article 5 du PDF version mars 2026. Elles ne sont pas recopiées dans la publication mars 2027, qui pointe vers une autre étiquette de version."
+      ]
+    },
+    {
+      "id": "brevet-federal-specialiste-rh",
+      "kind": "examen_professionnel_federal",
+      "federal": true,
+      "title": "Spécialiste RH avec brevet fédéral",
+      "notTheSameAs": "hrse-certificat-gestionnaire-rh",
+      "options": [
+        { "id": "A", "label": "Gestion du personnel en entreprise" },
+        { "id": "B", "label": "Placement public et conseil en personnel" },
+        { "id": "C", "label": "Placement privé et location de services" }
+      ],
+      "documents": [
+        {
+          "role": "publication_session_2026",
+          "url": "https://www.hrse.ch/download/pictures/e6/0njxb1s05o7pffmzdmpbe0pj9w01nd/bp_publication_2026_incl._cgv.pdf",
+          "sha256": "198fe6505132e3d84fb03e3273c82c290cf5e8ba7a5d5ce32151758dc55f08f7",
+          "sameBytesAs": [
+            "https://www.hrse.ch/download/pictures/2f/7s3dmsbx0wy6ehnjttog2bv05y11m1/bp_publication_2026_incl._cgv.pdf",
+            "https://www.hrse.ch/download/pictures/0b/m21w5w8n3n6ktgwg5v18bitr9ddam4/bp_publication_2026_incl._cgv.pdf"
+          ],
+          "read": "Pour l'examen 2026, la publication cite le règlement 2017 (09.03.2015), la modification du 09.08.2017 et les directives 2023 (01.01.2023). Elle nomme les options A, B et C. La répartition CHF 350 / 500 / 500 est une taxe, pas une pondération de notes."
+        },
+        {
+          "role": "directives_2023",
+          "url": "https://www.hrse.ch/download/pictures/a8/zyv2dtdgnkhdd3k2pmlu2dnb0agqgr/wl_hr-fachleute_2023_fr.pdf",
+          "sha256": "c51f13734b8370eae938c64b84162701d9ac1dd417ea6d5e2d6c79d52b9dc111",
+          "cover": "Edition 2023, directives pour le règlement d'examen pour spécialiste RH avec brevet fédéral",
+          "partsRead": [
+            { "id": "1", "label": "Connaissances générales RH", "mode": "écrit", "minutes": 180, "scope": "identique pour A, B et C, champ Base 1" },
+            { "id": "2.1", "label": "Étude de cas", "mode": "écrit", "minutes": 210, "scope": "spécifique à l'option" },
+            { "id": "2.2", "label": "Présentation et discussion", "mode": "oral", "minutes": 80, "scope": "50 de préparation, 10 de présentation, 20 de discussion" },
+            { "id": "3.1", "label": "Mini-cases", "mode": "oral", "minutes": 30, "scope": "4 mini-cas, spécifique à l'option et Base 3" },
+            { "id": "3.2", "label": "Réflexion sur une situation d'entretien", "mode": "oral", "minutes": 40, "scope": "20 de préparation et 20 de réflexion, champ Base 2" }
+          ],
+          "passRuleRead": "Note globale au moins 4,0, note de l'épreuve 1 au moins 4,0, et pas plus de deux notes partielles inférieures à 4,0.",
+          "weights": "non_affirme"
+        },
+        {
+          "role": "reglement_pdf_lie",
+          "url": "https://www.hrse.ch/download/pictures/66/he9e8qyf5a9ogur1s8zw9o1e4wfgv5/po_hr-fachleute_2017_fr_mit_rev_bis_2022.pdf",
+          "sha256": "7deb93651c895391884ea18e00522263b31fa5e29892dfe39a8f7d6ed77522c1",
+          "read": "Le PDF commence par la modification du 29 mars 2022, approuvée par le SEFRI le 29 mars 2022, qui ajoute le titre Gestionnaire RH parmi les certificats d'admission, puis contient la modification du 9 août 2017 avec les conditions de pratique des options A, B et C."
+        }
+      ],
+      "ambiguities": [
+        "La publication 2026 ne cite pas la modification du 29 mars 2022, alors que le PDF de règlement lié sur la page la contient et qu'elle est approuvée par le SEFRI. On ne tranche pas ici si cette modification s'applique à la session 2026.",
+        "La colonne Pondération du tableau des directives 2023 (page 16) n'a pas fourni de pourcentages exploitables à l'extraction du texte. Aucun poids chiffré du brevet n'est donc affirmé. Les montants de la taxe ne sont pas des poids de notes."
+      ]
+    }
+  ]
+}

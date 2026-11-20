@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "lang": "de",
+  "ficheRead": { "temps": true },
+  "progress": {
+    "temps": { "best": 100, "attempts": 1, "correct": ["temps-1"], "lastAt": 1700000002000 }
+  },
+  "mistakes": [],
+  "lastModule": "temps",
+  "disclaimerSeen": false,
+  "futureNote": "clé inconnue à conserver"
+}

@@ -6,11 +6,14 @@
     "@expo/metro-runtime": "~58.0.15",
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-tvos/config-tv": "^0.1.7",
     "expo": "~58.0.19",
     "expo-constants": "~58.0.13",
     "expo-font": "~58.0.10",
+    "expo-haptics": "~58.0.8",
     "expo-linking": "~58.0.14",
     "expo-router": "~58.0.26",
+    "expo-speech": "~58.0.4",
     "expo-status-bar": "~58.0.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -29,9 +32,16 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/lib/persist.test.ts",
+    "eas-build-pre-install": "node scripts/eas-tv-preinstall.mjs",
+    "eas-build-post-install": "node scripts/eas-tv-preinstall.mjs --check-installed",
+    "test": "node --experimental-strip-types --import ./scripts/register-ts.mjs --test src/lib/persist.test.ts src/lib/learning-state.test.ts src/lib/progress-export.test.ts src/content/bank.test.ts src/lib/srs.test.ts src/lib/learn-state.test.ts src/curriculum/catalog.test.ts src/lib/mac-layout.test.ts src/theme.glass.test.ts && node --test scripts/test-tv.mjs scripts/test-mac.mjs",
     "export:web": "expo export -p web && node scripts/pwa.mjs",
     "icons": "python3 scripts/make-icons.py"
+  },
+  "expo": {
+    "autolinking": {
+      "nativeModulesDir": "./modules"
+    }
   },
   "private": true
 }
