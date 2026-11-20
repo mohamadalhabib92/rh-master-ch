@@ -19,6 +19,21 @@ import { useTheme } from '../theme-context';
 import { hit, space as spaceScale } from '../theme';
 import { useMacItem, useMacScroll } from './MacBridge';
 
+function relief(boxShadow: string): ViewStyle {
+  return { boxShadow } as ViewStyle;
+}
+
+export function GlassWash() {
+  const theme = useTheme();
+  if (!theme.glass.translucent) return null;
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <View style={{ position: 'absolute', width: 320, height: 320, borderRadius: 160, backgroundColor: theme.glass.washA, top: -90, right: -70 }} />
+      <View style={{ position: 'absolute', width: 380, height: 380, borderRadius: 190, backgroundColor: theme.glass.washB, bottom: -40, left: -120 }} />
+    </View>
+  );
+}
+
 export function Screen({
   children,
   scroll = true,
@@ -53,8 +68,9 @@ export function Screen({
   return (
     <SafeAreaView
       edges={['top', 'left', 'right']}
-      style={[styles.screen, { backgroundColor: calm ? theme.palette.bgElevated : theme.palette.bg }, dir ? { direction: dir } : null, style]}
+      style={[styles.screen, { backgroundColor: calm ? theme.palette.bgElevated : theme.glass.canvas, overflow: 'hidden' }, dir ? { direction: dir } : null, style]}
     >
+      {calm ? null : <GlassWash />}
       {inner}
     </SafeAreaView>
   );
@@ -74,27 +90,27 @@ function useTextStyle(base: TextStyle): TextStyle {
 export function H1({ style, color, center, ...p }: TProps) {
   const theme = useTheme();
   const base = useTextStyle(theme.type.h1);
-  return <Text {...p} style={[base, color ? { color } : null, center ? { textAlign: 'center' } : null, style]} />;
+  return <Text {...p} allowFontScaling maxFontSizeMultiplier={3} style={[base, color ? { color } : null, center ? { textAlign: 'center' } : null, style]} />;
 }
 export function H2({ style, color, center, ...p }: TProps) {
   const theme = useTheme();
   const base = useTextStyle(theme.type.h2);
-  return <Text {...p} style={[base, color ? { color } : null, center ? { textAlign: 'center' } : null, style]} />;
+  return <Text {...p} allowFontScaling maxFontSizeMultiplier={3} style={[base, color ? { color } : null, center ? { textAlign: 'center' } : null, style]} />;
 }
 export function H3({ style, color, center, ...p }: TProps) {
   const theme = useTheme();
   const base = useTextStyle(theme.type.h3);
-  return <Text {...p} style={[base, color ? { color } : null, center ? { textAlign: 'center' } : null, style]} />;
+  return <Text {...p} allowFontScaling maxFontSizeMultiplier={3} style={[base, color ? { color } : null, center ? { textAlign: 'center' } : null, style]} />;
 }
 export function Body({ style, color, center, ...p }: TProps) {
   const theme = useTheme();
   const base = useTextStyle({ ...theme.type.body, lineHeight: theme.bodyLine });
-  return <Text {...p} style={[base, color ? { color } : null, center ? { textAlign: 'center' } : null, style]} />;
+  return <Text {...p} allowFontScaling maxFontSizeMultiplier={3} style={[base, color ? { color } : null, center ? { textAlign: 'center' } : null, style]} />;
 }
 export function Muted({ style, color, center, ...p }: TProps) {
   const theme = useTheme();
   const base = useTextStyle({ ...theme.type.small, color: theme.palette.muted, lineHeight: theme.dyslexia ? 22 : theme.type.small.lineHeight });
-  return <Text {...p} style={[base, color ? { color } : null, center ? { textAlign: 'center' } : null, style]} />;
+  return <Text {...p} allowFontScaling maxFontSizeMultiplier={3} style={[base, color ? { color } : null, center ? { textAlign: 'center' } : null, style]} />;
 }
 
 export function Card({
@@ -113,14 +129,17 @@ export function Card({
   macItem.setPress(onPress);
   const [hover, setHover] = useState(false);
   const cardStyle = {
-    backgroundColor: theme.palette.surface,
+    backgroundColor: theme.glass.translucent ? theme.glass.surface : theme.palette.surface,
     borderRadius: theme.radius.lg,
-    borderColor: theme.palette.border,
+    borderColor: theme.glass.translucent ? theme.glass.border : theme.palette.border,
+    borderTopColor: theme.glass.highlight,
+    borderTopWidth: 1,
     shadowColor: theme.palette.shadow,
-    shadowOpacity: theme.dark ? 0.4 : 1,
+    shadowOpacity: theme.dark ? 0.45 : 1,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 8 },
-    elevation: 2,
+    elevation: 3,
+    ...relief(theme.glass.cardShadow),
   };
   if (onPress) {
     return (
@@ -169,8 +188,19 @@ export function Button({
   macItem.setPress(onPress);
   const [hover, setHover] = useState(false);
   const bg =
-    variant === 'primary' ? theme.palette.primary : variant === 'secondary' ? theme.palette.primarySoft : variant === 'danger' ? theme.palette.danger : 'transparent';
+    variant === 'primary'
+      ? theme.palette.primary
+      : variant === 'danger'
+        ? theme.palette.danger
+        : variant === 'secondary'
+          ? theme.glass.translucent
+            ? theme.dark
+              ? 'rgba(58, 36, 48, 0.92)'
+              : 'rgba(255, 252, 248, 0.94)'
+            : theme.palette.primarySoft
+          : 'transparent';
   const fg = variant === 'primary' || variant === 'danger' ? theme.palette.onPrimary : theme.palette.primaryText;
+  const sunk = theme.reduceMotion;
   return (
     <Pressable
       accessibilityRole="button"
@@ -187,16 +217,26 @@ export function Button({
         {
           backgroundColor: bg,
           borderRadius: theme.radius.md,
-          opacity: disabled ? 0.45 : pressed ? 0.9 : theme.mac && hover ? 0.88 : 1,
-          transform: pressed && !theme.reduceMotion && !disabled ? [{ scale: 0.985 }] : undefined,
+          borderTopWidth: 1,
+          borderTopColor: variant === 'primary' || variant === 'danger' ? 'rgba(255,255,255,0.45)' : theme.glass.highlight,
+          borderBottomWidth: pressed && !disabled ? 1 : variant === 'ghost' ? 1 : 3,
+          borderBottomColor: theme.glass.lip,
+          borderLeftWidth: variant === 'ghost' ? 1 : 0,
+          borderRightWidth: variant === 'ghost' ? 1 : 0,
+          borderColor: theme.glass.border,
+          opacity: disabled ? 0.45 : 1,
+          transform: pressed && !sunk && !disabled ? [{ translateY: 2 }] : undefined,
         },
-        variant === 'ghost' && { borderWidth: 1, borderColor: theme.palette.border },
+        relief(pressed || disabled ? theme.glass.buttonPressed : theme.glass.buttonRest),
+        theme.mac && hover && !pressed ? { borderColor: theme.palette.accent } : null,
         macItem.focused ? { borderWidth: 3, borderColor: '#FFFFFF' } : null,
         style,
       ]}
     >
       {icon}
-      <Text style={[styles.buttonText, { color: fg, fontFamily: theme.fontFamily }, small && { fontSize: 13 }]}>{label}</Text>
+      <Text allowFontScaling maxFontSizeMultiplier={2.4} style={[styles.buttonText, { color: fg, fontFamily: theme.fontFamily }, small && { fontSize: 13 }]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -213,13 +253,19 @@ export function Chip({ label, active, onPress, onLongPress }: { label: string; a
       style={({ pressed }) => [
         styles.chip,
         {
-          borderColor: active ? theme.palette.primary : theme.palette.border,
-          backgroundColor: active ? theme.palette.primary : theme.palette.surface,
-          transform: pressed && !theme.reduceMotion ? [{ scale: 0.98 }] : undefined,
+          borderColor: active ? theme.palette.primary : theme.glass.translucent ? theme.glass.border : theme.palette.border,
+          borderTopColor: active ? 'rgba(255,255,255,0.45)' : theme.glass.highlight,
+          borderBottomColor: active ? theme.glass.lip : theme.palette.border,
+          borderBottomWidth: pressed ? 1 : 2,
+          backgroundColor: active ? theme.palette.primary : theme.glass.translucent ? theme.glass.surface : theme.palette.surface,
+          transform: pressed && !theme.reduceMotion ? [{ translateY: 1 }] : undefined,
         },
+        relief(active ? theme.glass.buttonRest : theme.glass.cardShadow),
       ]}
     >
-      <Text style={[styles.chipText, { color: active ? theme.palette.onPrimary : theme.palette.text, fontFamily: theme.fontFamily }]}>{label}</Text>
+      <Text allowFontScaling maxFontSizeMultiplier={2.4} style={[styles.chipText, { color: active ? theme.palette.onPrimary : theme.palette.text, fontFamily: theme.fontFamily }]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -235,7 +281,9 @@ export function Badge({ label, tone = 'neutral' }: { label: string; tone?: 'neut
   const [bg, fg] = map[tone];
   return (
     <View style={[styles.badge, { backgroundColor: bg }]}>
-      <Text style={[styles.badgeText, { color: fg }]}>{label}</Text>
+      <Text allowFontScaling maxFontSizeMultiplier={2.4} style={[styles.badgeText, { color: fg }]}>
+        {label}
+      </Text>
     </View>
   );
 }
@@ -412,7 +460,18 @@ export function Skeleton({ height = 18, width = '100%', style }: { height?: numb
 export function EmptyState({ icon, title, text, action }: { icon?: React.ReactNode; title: string; text?: string; action?: React.ReactNode }) {
   const theme = useTheme();
   return (
-    <View style={[styles.empty, { backgroundColor: theme.palette.surface, borderRadius: theme.radius.lg, borderColor: theme.palette.border }]}>
+    <View
+      style={[
+        styles.empty,
+        {
+          backgroundColor: theme.glass.translucent ? theme.glass.surface : theme.palette.surface,
+          borderRadius: theme.radius.lg,
+          borderColor: theme.glass.translucent ? theme.glass.border : theme.palette.border,
+          borderTopColor: theme.glass.highlight,
+        },
+        relief(theme.glass.cardShadow),
+      ]}
+    >
       <View style={[styles.emptyIcon, { backgroundColor: theme.palette.accentSoft }]}>{icon}</View>
       <H3 center>{title}</H3>
       {text ? <Muted center>{text}</Muted> : null}
@@ -432,7 +491,7 @@ export function Spacer({ h = spaceScale.md }: { h?: number }) {
 export function BootScreen({ label }: { label: string }) {
   const theme = useTheme();
   return (
-    <View accessibilityLabel={label} style={[styles.screen, { backgroundColor: theme.palette.bg, alignItems: 'center', justifyContent: 'center', gap: 12, padding: spaceScale.lg }]}>
+    <View accessibilityLabel={label} accessibilityRole="progressbar" style={[styles.screen, { backgroundColor: theme.glass.canvas, alignItems: 'center', justifyContent: 'center', gap: 12, padding: spaceScale.lg }]}>
       <Skeleton height={132} />
       <Skeleton height={44} width="70%" />
       <Skeleton height={84} />
@@ -444,7 +503,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { padding: spaceScale.lg, paddingBottom: 56, alignItems: 'center' },
   maxWidth: { width: '100%' },
-  card: { padding: spaceScale.lg, borderWidth: StyleSheet.hairlineWidth, gap: spaceScale.sm },
+  card: { padding: spaceScale.lg, borderWidth: 1, gap: spaceScale.sm },
   button: { minHeight: hit, paddingHorizontal: spaceScale.lg, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
   buttonText: { fontSize: 16, fontWeight: '700' },
   chip: { minHeight: hit, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, justifyContent: 'center' },

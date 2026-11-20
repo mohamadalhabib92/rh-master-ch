@@ -17,7 +17,7 @@ function Shell() {
     return (
       <BootGate>
         <StatusBar hidden />
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.palette.bg } }}>
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.glass.canvas } }}>
           <Stack.Screen name="tv" />
         </Stack>
         {path.startsWith('/tv') ? null : <Redirect href="/tv" />}
@@ -28,7 +28,7 @@ function Shell() {
     <BootGate>
       <StatusBar style={theme.dark ? 'light' : 'dark'} />
       <MacBridge>
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.palette.bg } }}>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.glass.canvas } }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="module/[id]" />
         <Stack.Screen name="quiz/[id]" />

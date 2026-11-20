@@ -3,7 +3,8 @@ import { Platform, Share, TextInput } from 'react-native';
 import { planRestore } from '../lib/progress-export';
 import { useI18n } from '../lib/i18n';
 import { appStore } from '../lib/store';
-import { colors, radius } from '../theme';
+import { radius } from '../theme';
+import { useTheme } from '../theme-context';
 import { Body, Button, Card, H3, Muted } from './ui';
 
 function download(name: string, text: string) {
@@ -25,6 +26,7 @@ function download(name: string, text: string) {
 /** Export et restauration explicites. Le JSON n'est pas rendu à l'écran. */
 export function HealthyBackup() {
   const { t } = useI18n();
+  const theme = useTheme();
   const status = appStore.useDataStatus();
   const healthy = status.healthy;
   const [hint, setHint] = useState<string | null>(null);
@@ -70,10 +72,20 @@ export function HealthyBackup() {
           setChecked(null);
         }}
         placeholder={t('backupPaste')}
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={theme.palette.muted}
         accessibilityLabel={t('backupPaste')}
         autoCorrect={false}
-        style={{ minHeight: 44, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: 12, color: colors.text }}
+        style={{
+          minHeight: 48,
+          borderWidth: 1,
+          borderTopWidth: 2,
+          borderColor: theme.glass.translucent ? theme.glass.border : theme.palette.border,
+          borderTopColor: theme.dark ? 'rgba(0,0,0,0.45)' : 'rgba(26,29,35,0.16)',
+          backgroundColor: theme.glass.translucent ? theme.glass.surface : theme.palette.surface,
+          borderRadius: radius.md,
+          paddingHorizontal: 12,
+          color: theme.palette.text,
+        }}
       />
       <Button
         label={t('backupCheck')}

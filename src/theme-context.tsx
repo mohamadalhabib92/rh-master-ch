@@ -1,14 +1,17 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { AccessibilityInfo, Platform, useWindowDimensions } from 'react-native';
 import { appStore } from './lib/store';
-import { columnCount, contentMaxWidth, macType, motion, paletteFor, radius, sidebarFor, space, type as phoneType, type Palette } from './theme';
+import { columnCount, contentMaxWidth, glassFor, macType, motion, paletteFor, radius, sidebarFor, space, type as phoneType, type Glass, type Palette } from './theme';
 import { isMacApp } from './lib/mac-runtime';
 
 export type Theme = {
   palette: Palette;
+  glass: Glass;
   dark: boolean;
   contrast: 'default' | 'high';
   reduceMotion: boolean;
+  reduceTransparency: boolean;
+  tv: boolean;
   dyslexia: boolean;
   mac: boolean;
   sidebar: boolean;
@@ -31,6 +34,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { width } = useWindowDimensions();
   const [mac, setMac] = useState(false);
   const [osReduce, setOsReduce] = useState(false);
+  const [osTransparency, setOsTransparency] = useState(false);
+  const tv = Platform.isTV;
   useEffect(() => {
     setMac(isMacApp());
   }, []);
@@ -52,14 +57,42 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       sub?.remove?.();
     };
   }, []);
+  useEffect(() => {
+    let alive = true;
+    let sub: { remove?: () => void } | undefined;
+    const info = AccessibilityInfo as typeof AccessibilityInfo & {
+      isReduceTransparencyEnabled?: () => Promise<boolean>;
+    };
+    try {
+      if (typeof info.isReduceTransparencyEnabled === 'function') {
+        void Promise.resolve(info.isReduceTransparencyEnabled())
+          .then((value) => {
+            if (alive) setOsTransparency(Boolean(value));
+          })
+          .catch(() => undefined);
+      }
+      sub = AccessibilityInfo.addEventListener('reduceTransparencyChanged', (value) => setOsTransparency(Boolean(value)));
+    } catch {
+      // Réglage indisponible (web, Android, télé).
+    }
+    return () => {
+      alive = false;
+      sub?.remove?.();
+    };
+  }, []);
   const value = useMemo<Theme>(() => {
     const dyslexia = settings.dyslexiaFont;
     const text = mac ? macType : phoneType;
+    const palette = paletteFor(settings.dark, settings.contrast);
+    const solid = settings.contrast === 'high' || osTransparency || tv;
     return {
-      palette: paletteFor(settings.dark, settings.contrast),
+      palette,
+      glass: glassFor(palette, solid ? 'solid' : settings.dark ? 'dark' : 'light'),
       dark: settings.dark,
       contrast: settings.contrast,
       reduceMotion: settings.reduceMotion || osReduce,
+      reduceTransparency: osTransparency,
+      tv,
       dyslexia,
       mac,
       sidebar: sidebarFor(width),
@@ -74,7 +107,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       bodyLine: dyslexia ? 28 : text.body.lineHeight,
       letterSpacing: dyslexia ? 0.4 : 0,
     };
-  }, [mac, osReduce, settings.contrast, settings.dark, settings.dyslexiaFont, settings.reduceMotion, width]);
+  }, [mac, osReduce, osTransparency, settings.contrast, settings.dark, settings.dyslexiaFont, settings.reduceMotion, tv, width]);
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 

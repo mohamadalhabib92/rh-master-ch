@@ -19,7 +19,7 @@ export function BootGate({ children }: { children: React.ReactNode }) {
 
   if (phase === 'timedOut') {
     return (
-      <View style={[styles.screen, { backgroundColor: theme.palette.bg }]}>
+      <View style={[styles.screen, { backgroundColor: theme.glass.canvas }]}>
         <View style={styles.box}>
           <H2>{t('bootTimeoutTitle')}</H2>
           <Muted>{t('bootTimeoutText')}</Muted>
@@ -31,7 +31,7 @@ export function BootGate({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <View accessibilityLabel={t('bootSkeletonLabel')} accessibilityRole="progressbar" style={[styles.screen, { backgroundColor: theme.palette.bg }]}>
+    <View accessibilityLabel={t('bootSkeletonLabel')} accessibilityRole="progressbar" style={[styles.screen, { backgroundColor: theme.glass.canvas }]}>
       <View style={styles.box}>
         <Skeleton height={132} />
         <Skeleton height={44} />

@@ -232,6 +232,7 @@ const fr = {
   onboard3Title: 'Le calme se règle',
   onboard3Text: 'Mode sombre, contraste, police plus lisible, animations réduites, lecture à voix haute. Tu changes tout cela dans les réglages.',
   designAppearance: 'Apparence et concentration',
+  verreSystem: 'Verre suit le système : « Réduire la transparence » rend les surfaces opaques, « Réduire les animations » supprime le mouvement. Le texte reste lisible dans les deux modes.',
   darkMode: 'Mode sombre',
   highContrast: 'Contraste élevé',
   dyslexiaFont: 'Texte plus aéré',
@@ -436,6 +437,7 @@ const de: Partial<Dict> = {
   rateIjm: 'KTG (Krankentaggeld)',
   rateFamily: 'Familienzulagen',
   rateLppAge: 'BVG-Satz nach Alter',
+  verreSystem: 'Glas folgt dem System: «Transparenz reduzieren» macht die Flächen deckend, «Bewegung reduzieren» nimmt die Animation. Der Text bleibt in beiden Modi lesbar.',
 };
 
 const it: Partial<Dict> = {
@@ -608,6 +610,7 @@ const it: Partial<Dict> = {
   rateIjm: 'IGM (indennità giornaliera di malattia)',
   rateFamily: 'Assegni familiari',
   rateLppAge: 'Aliquota LPP secondo l’età',
+  verreSystem: 'Il vetro segue il sistema: «Riduci la trasparenza» rende le superfici opache, «Riduci il movimento» toglie l’animazione. Il testo resta leggibile nei due modi.',
 };
 
 const en: Partial<Dict> = {
@@ -780,6 +783,7 @@ const en: Partial<Dict> = {
   rateIjm: 'Daily sickness benefits',
   rateFamily: 'Family allowances',
   rateLppAge: 'Occupational pension rate by age',
+  verreSystem: 'Glass follows the system: Reduce Transparency makes surfaces opaque, and Reduce Motion removes animation. Text stays readable in both modes.',
 };
 
 export const dictionaries: Record<Lang, Partial<Dict>> & { fr: Dict } = { fr, de, it, en };

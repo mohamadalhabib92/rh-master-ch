@@ -21,7 +21,12 @@ function Sidebar() {
   const path = usePathname();
   return (
     <ScrollView
-      style={{ width: 248, backgroundColor: theme.palette.surface, borderRightWidth: 1, borderRightColor: theme.palette.border }}
+      style={{
+        width: 248,
+        backgroundColor: theme.glass.translucent ? theme.glass.surface : theme.palette.surface,
+        borderRightWidth: 1,
+        borderRightColor: theme.glass.translucent ? theme.glass.border : theme.palette.border,
+      }}
       contentContainerStyle={{ padding: 20, gap: 8, paddingBottom: 32 }}
     >
       <Text style={{ color: theme.palette.text, fontSize: theme.type.h3.fontSize, fontWeight: '800', marginBottom: 12 }}>{t('appName')}</Text>
@@ -64,7 +69,7 @@ export default function TabsLayout() {
       <Ionicons name={name} color={(color ?? undefined) as string | undefined} size={size} />
     );
   return (
-    <View style={{ flex: 1, flexDirection: theme.sidebar ? 'row' : 'column', backgroundColor: theme.palette.bg }}>
+    <View style={{ flex: 1, flexDirection: theme.sidebar ? 'row' : 'column', backgroundColor: theme.glass.canvas }}>
       {theme.sidebar ? <Sidebar /> : null}
       <View style={{ flex: 1 }}>
         <Tabs
@@ -74,16 +79,23 @@ export default function TabsLayout() {
             tabBarInactiveTintColor: theme.palette.muted,
             tabBarStyle: theme.sidebar
               ? { display: 'none', height: 0 }
-              : { backgroundColor: theme.palette.surface, borderTopColor: theme.palette.border, minHeight: 60, paddingTop: 4 },
+              : {
+                  backgroundColor: theme.glass.translucent ? theme.glass.surface : theme.palette.surface,
+                  borderTopColor: theme.glass.highlight,
+                  borderTopWidth: 1,
+                  minHeight: 64,
+                  paddingTop: 6,
+                  paddingBottom: 6,
+                },
             tabBarLabelStyle: { fontWeight: '600' },
           }}
         >
           <Tabs.Screen name="index" options={{ title: t('tabHome'), tabBarIcon: icon('home-outline'), tabBarAccessibilityLabel: t('tabHome') }} />
           <Tabs.Screen name="learn" options={{ title: t('tabLearn'), tabBarIcon: icon('leaf-outline'), tabBarAccessibilityLabel: t('tabLearn') }} />
           <Tabs.Screen name="modules" options={{ title: t('tabModules'), tabBarIcon: icon('school-outline'), tabBarAccessibilityLabel: t('tabModules') }} />
-          <Tabs.Screen name="calc" options={{ title: t('tabCalc'), tabBarIcon: icon('calculator-outline') }} />
-          <Tabs.Screen name="glossary" options={{ title: t('tabGlossary'), tabBarIcon: icon('book-outline') }} />
-          <Tabs.Screen name="settings" options={{ title: t('tabSettings'), tabBarIcon: icon('settings-outline') }} />
+          <Tabs.Screen name="calc" options={{ title: t('tabCalc'), tabBarIcon: icon('calculator-outline'), tabBarAccessibilityLabel: t('tabCalc') }} />
+          <Tabs.Screen name="glossary" options={{ title: t('tabGlossary'), tabBarIcon: icon('book-outline'), tabBarAccessibilityLabel: t('tabGlossary') }} />
+          <Tabs.Screen name="settings" options={{ title: t('tabSettings'), tabBarIcon: icon('settings-outline'), tabBarAccessibilityLabel: t('tabSettings') }} />
         </Tabs>
       </View>
     </View>

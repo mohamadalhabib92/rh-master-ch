@@ -24,8 +24,21 @@ export function Onboarding() {
   const last = step === STEPS.length - 1;
   return (
     <Modal visible animationType={theme.reduceMotion ? 'none' : 'fade'} transparent>
-      <View style={{ flex: 1, backgroundColor: theme.palette.bg, justifyContent: 'center', padding: 24 }}>
-        <View style={{ width: '100%', maxWidth: 520, alignSelf: 'center', gap: 16 }}>
+      <View style={{ flex: 1, backgroundColor: theme.glass.translucent ? 'rgba(11, 16, 22, 0.46)' : theme.palette.bg, justifyContent: 'center', padding: 24 }}>
+        <View
+          style={{
+            width: '100%',
+            maxWidth: 520,
+            alignSelf: 'center',
+            gap: 16,
+            backgroundColor: theme.glass.translucent ? theme.glass.surface : theme.palette.surface,
+            borderRadius: theme.radius.lg,
+            borderWidth: 1,
+            borderColor: theme.glass.border,
+            borderTopColor: theme.glass.highlight,
+            padding: 24,
+          }}
+        >
           <View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: theme.palette.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
             <Ionicons name={current.icon} size={32} color={theme.palette.primaryText} />
           </View>

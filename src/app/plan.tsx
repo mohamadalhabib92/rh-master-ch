@@ -32,11 +32,13 @@ export default function PlanScreen() {
         style={{
           minHeight: 48,
           borderWidth: 1,
-          borderColor: theme.palette.border,
+          borderTopWidth: 2,
+          borderColor: theme.glass.translucent ? theme.glass.border : theme.palette.border,
+          borderTopColor: theme.dark ? 'rgba(0,0,0,0.45)' : 'rgba(26,29,35,0.16)',
           borderRadius: theme.radius.md,
           paddingHorizontal: 12,
           color: theme.palette.text,
-          backgroundColor: theme.palette.surface,
+          backgroundColor: theme.glass.translucent ? theme.glass.surface : theme.palette.surface,
           fontSize: 16,
         }}
       />

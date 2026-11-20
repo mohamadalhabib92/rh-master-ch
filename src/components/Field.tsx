@@ -30,7 +30,16 @@ export function Field({
         keyboardType={keyboard}
         placeholder={placeholder}
         placeholderTextColor={theme.palette.muted}
-        style={[styles.input, { color: theme.palette.text, borderColor: error ? theme.palette.danger : theme.palette.border, backgroundColor: theme.palette.surface, borderRadius: theme.radius.md }]}
+        style={[
+          styles.input,
+          {
+            color: theme.palette.text,
+            borderColor: error ? theme.palette.danger : theme.glass.translucent ? theme.glass.border : theme.palette.border,
+            borderTopColor: theme.dark ? 'rgba(0,0,0,0.45)' : 'rgba(26,29,35,0.16)',
+            backgroundColor: theme.glass.translucent ? theme.glass.surface : theme.palette.surface,
+            borderRadius: theme.radius.md,
+          },
+        ]}
       />
       {error ? <Text style={[styles.err, { color: theme.palette.danger }]}>{error}</Text> : hint ? <Text style={[styles.hint, { color: theme.palette.warnText }]}>{hint}</Text> : null}
     </View>
@@ -39,7 +48,7 @@ export function Field({
 
 const styles = StyleSheet.create({
   label: { fontSize: 13, fontWeight: '600' },
-  input: { minHeight: 48, borderWidth: 1, paddingHorizontal: 12, fontSize: 16 },
+  input: { minHeight: 48, borderWidth: 1, borderTopWidth: 2, paddingHorizontal: 12, fontSize: 16 },
   err: { fontSize: 12 },
   hint: { fontSize: 12 },
 });

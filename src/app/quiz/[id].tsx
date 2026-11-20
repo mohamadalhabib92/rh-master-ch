@@ -127,12 +127,18 @@ export default function Quiz() {
             <Pressable
               key={oi}
               accessibilityRole="radio"
+              accessibilityLabel={text.o[oi]}
               accessibilityState={{ checked: chosen, disabled: checked }}
               disabled={checked}
               onPress={() => setSel(oi)}
               style={[
                 styles.opt,
-                { borderColor: theme.palette.border, backgroundColor: theme.palette.surface, borderRadius: theme.radius.md },
+                {
+                  borderColor: theme.palette.border,
+                  backgroundColor: theme.glass.translucent ? theme.glass.surface : theme.palette.surface,
+                  borderRadius: theme.radius.md,
+                  borderTopColor: theme.glass.highlight,
+                },
                 chosen && { borderColor: theme.palette.primary, backgroundColor: theme.palette.primarySoft },
                 right && { borderColor: theme.palette.ok, backgroundColor: theme.palette.okSoft },
                 wrong && { borderColor: theme.palette.danger, backgroundColor: theme.palette.dangerSoft },
@@ -143,7 +149,9 @@ export default function Quiz() {
                 size={20}
                 color={right ? theme.palette.ok : wrong ? theme.palette.danger : chosen ? theme.palette.primaryText : theme.palette.muted}
               />
-              <Text style={[styles.optText, { color: theme.palette.text, fontFamily: theme.fontFamily }]}>{text.o[oi]}</Text>
+              <Text allowFontScaling maxFontSizeMultiplier={3} style={[styles.optText, { color: theme.palette.text, fontFamily: theme.fontFamily }]}>
+                {text.o[oi]}
+              </Text>
             </Pressable>
           );
         })}
@@ -172,6 +180,6 @@ export default function Quiz() {
 }
 
 const styles = StyleSheet.create({
-  opt: { flexDirection: 'row', gap: 10, alignItems: 'center', padding: 14, borderWidth: 1.5 },
+  opt: { flexDirection: 'row', gap: 10, alignItems: 'center', padding: 14, minHeight: 48, borderWidth: 1.5, borderTopWidth: 1 },
   optText: { flex: 1, fontSize: 16, lineHeight: 22 },
 });

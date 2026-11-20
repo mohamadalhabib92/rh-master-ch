@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, StyleSheet, TextInput, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DisclaimerBanner } from '../../components/Disclaimer';
 import { Highlight } from '../../components/Highlight';
-import { Card, EmptyState, H1, Muted, Row } from '../../components/ui';
+import { Card, EmptyState, GlassWash, H1, Muted, Row } from '../../components/ui';
 import { GLOSSARY, normalize } from '../../data/glossary';
 import { useI18n } from '../../lib/i18n';
 import { useDebounced } from '../../lib/useDebounced';
@@ -27,7 +27,8 @@ export default function Glossary() {
   const others = (['fr', 'de', 'it', 'en'] as const).filter((l) => l !== lang);
   useEffect(() => onGlossaryFind(() => inputRef.current?.focus()), []);
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.palette.bg }}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.glass.canvas, overflow: 'hidden' }}>
+      <GlassWash />
       <FlatList
         data={list}
         keyExtractor={(g) => g.id}
@@ -40,7 +41,17 @@ export default function Glossary() {
           <View style={{ gap: space.md }}>
             <H1>{t('tabGlossary')}</H1>
             <DisclaimerBanner />
-            <View style={[styles.search, { backgroundColor: theme.palette.surface, borderColor: theme.palette.border, borderRadius: theme.radius.md }]}>
+            <View
+              style={[
+                styles.search,
+                {
+                  backgroundColor: theme.glass.translucent ? theme.glass.surface : theme.palette.surface,
+                  borderColor: theme.glass.translucent ? theme.glass.border : theme.palette.border,
+                  borderTopColor: theme.dark ? 'rgba(0,0,0,0.45)' : 'rgba(26,29,35,0.16)',
+                  borderRadius: theme.radius.md,
+                },
+              ]}
+            >
               <Ionicons name="search" size={18} color={theme.palette.muted} />
               <TextInput
                 ref={inputRef as never}
@@ -52,7 +63,11 @@ export default function Glossary() {
                 style={[styles.input, { color: theme.palette.text, fontFamily: theme.fontFamily }]}
                 autoCorrect={false}
               />
-              {q ? <Ionicons name="close-circle" size={18} color={theme.palette.muted} onPress={() => setQ('')} /> : null}
+              {q ? (
+                <Pressable accessibilityRole="button" accessibilityLabel={t('close')} onPress={() => setQ('')} style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name="close-circle" size={18} color={theme.palette.muted} />
+                </Pressable>
+              ) : null}
             </View>
             <Muted>{t('terms', { n: list.length })}</Muted>
           </View>
@@ -81,7 +96,7 @@ export default function Glossary() {
 }
 
 const styles = StyleSheet.create({
-  search: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, paddingHorizontal: 12, minHeight: 48 },
+  search: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderTopWidth: 2, paddingHorizontal: 12, minHeight: 48 },
   input: { flex: 1, fontSize: 16, minHeight: 44 },
   term: { fontSize: 16, fontWeight: '700' },
   tr: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },

@@ -27,7 +27,20 @@ export default function Home() {
     <Screen>
       <View style={{ flexDirection: wide ? 'row' : 'column', flexWrap: 'wrap', gap: 16 }}>
         <View style={pane}>
-      <View style={[styles.hero, { backgroundColor: theme.palette.heroStart, borderRadius: theme.radius.lg }]}>
+      <View
+        style={[
+          styles.hero,
+          {
+            backgroundColor: theme.palette.heroStart,
+            borderRadius: theme.radius.lg,
+            borderTopWidth: 1,
+            borderTopColor: 'rgba(255,255,255,0.40)',
+            borderBottomWidth: 3,
+            borderBottomColor: theme.dark ? '#3A0A14' : '#5C0E1C',
+            boxShadow: theme.glass.buttonRest,
+          },
+        ]}
+      >
         <Row>
           <View style={styles.flag}>
             <Ionicons name="add" size={26} color="#fff" />

@@ -59,6 +59,7 @@ export default function Settings() {
       </Card>
       <Card>
         <H2>{t('designAppearance')}</H2>
+        <Muted>{t('verreSystem')}</Muted>
         <Row style={{ flexWrap: 'wrap' }}>
           <Chip label={t('darkMode')} active={settings.dark} onPress={() => updateLearnSettings({ dark: !settings.dark })} />
           <Chip label={t('highContrast')} active={settings.contrast === 'high'} onPress={() => updateLearnSettings({ contrast: settings.contrast === 'high' ? 'default' : 'high' })} />

@@ -68,13 +68,18 @@ export function PracticeItem({
               }}
               style={{
                 padding: 14,
+                minHeight: 48,
                 borderRadius: theme.radius.md,
                 borderWidth: 1.5,
+                borderTopWidth: 1,
+                borderTopColor: theme.glass.highlight,
                 borderColor: right ? theme.palette.ok : wrong ? theme.palette.danger : selected ? theme.palette.primary : theme.palette.border,
-                backgroundColor: right ? theme.palette.okSoft : wrong ? theme.palette.dangerSoft : theme.palette.surface,
+                backgroundColor: right ? theme.palette.okSoft : wrong ? theme.palette.dangerSoft : selected ? theme.palette.primarySoft : theme.glass.translucent ? theme.glass.surface : theme.palette.surface,
               }}
             >
-              <Text style={{ color: theme.palette.text, fontSize: 16, lineHeight: 22, fontFamily: theme.fontFamily }}>{option}</Text>
+              <Text allowFontScaling maxFontSizeMultiplier={3} style={{ color: theme.palette.text, fontSize: 16, lineHeight: 22, fontFamily: theme.fontFamily }}>
+                {option}
+              </Text>
             </Pressable>
           );
         })}

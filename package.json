@@ -34,7 +34,7 @@
     "typecheck": "tsc --noEmit",
     "eas-build-pre-install": "node scripts/eas-tv-preinstall.mjs",
     "eas-build-post-install": "node scripts/eas-tv-preinstall.mjs --check-installed",
-    "test": "node --experimental-strip-types --import ./scripts/register-ts.mjs --test src/lib/persist.test.ts src/lib/learning-state.test.ts src/lib/progress-export.test.ts src/content/bank.test.ts src/lib/srs.test.ts src/lib/learn-state.test.ts src/curriculum/catalog.test.ts src/lib/mac-layout.test.ts && node --test scripts/test-tv.mjs scripts/test-mac.mjs",
+    "test": "node --experimental-strip-types --import ./scripts/register-ts.mjs --test src/lib/persist.test.ts src/lib/learning-state.test.ts src/lib/progress-export.test.ts src/content/bank.test.ts src/lib/srs.test.ts src/lib/learn-state.test.ts src/curriculum/catalog.test.ts src/lib/mac-layout.test.ts src/theme.glass.test.ts && node --test scripts/test-tv.mjs scripts/test-mac.mjs",
     "export:web": "expo export -p web && node scripts/pwa.mjs",
     "icons": "python3 scripts/make-icons.py"
   },

@@ -8,7 +8,7 @@ Deux palettes, plus une variante contraste élevé. Le rouge suisse reste l’ac
 
 | Jeton | Clair | Sombre |
 | --- | --- | --- |
-| bg | `#F3F0EA` | `#101418` |
+| bg | `#E3EBF2` | `#0B1016` |
 | surface | `#FFFCF8` | `#1B232D` |
 | surfaceAlt | `#E8E2D8` | `#263140` |
 | text | `#1A1D23` | `#F4F0E8` |
@@ -36,6 +36,14 @@ Le héros d’accueil va du bordeaux `#8E1528` au bleu `#1F4B6E`. En sombre, les
 
 Le réglage « texte plus aéré » passe le corps à 17 / 28, ajoute un léger espacement des lettres et, sur le web, Verdana. Ce n’est pas une police médicale ni une promesse de confort pour une personne dyslexique : c’est une option de lecture.
 
+## Verre
+
+Les cartes, la barre d’onglets, la colonne latérale et les champs sont des surfaces translucides (`glassFor` dans `src/theme.ts`) posées sur un fond brumeux avec deux halos (rouge suisse, bleu lac). Le texte ne change pas : il reste sur la surface composée, au-dessus du seuil AA (4,5:1), y compris le gris `muted`.
+
+Les boutons ont une arête claire en haut, une lèvre plus sombre en bas et deux ombres (contact + portée). L’appui réduit la lèvre et l’ombre ; le décalage vertical est coupé si « Réduire les animations » est actif ou si le système demande moins de mouvement.
+
+Repli opaque, sans halo : contraste élevé, réglage système « Réduire la transparence », et le salon Apple TV. Sur la télé les aplats restent opaques pour la lecture à dix pieds. Le focus (échelle 1,08, bord de 6 pt, halo blanc) ne change pas. Seule une ombre de repos et une arête claire s’ajoutent hors focus.
+
 ## Espacement, rayons, ombres
 
 Échelle : 4, 8, 12, 16, 24, 32, 48.
@@ -44,7 +52,7 @@ Rayons : 12 (petit), 16 (boutons), 24 (cartes), pilule pour les pastilles.
 
 Ombre de carte : flou 18, décalage vertical 8, opacité faible (`shadow` du jeton). Pas d’ombre portée dure.
 
-Cible tactile : 48 px.
+Cible tactile : 48 px (au-dessus des 44 pt). Les textes suivent Dynamic Type jusqu’à 3× (`allowFontScaling`, `maxFontSizeMultiplier`).
 
 ## Icônes
 

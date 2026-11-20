@@ -39,7 +39,7 @@ export default function FocusScreen() {
     <Screen calm scroll={false}>
       <BackBar label={t('tabLearn')} />
       <Muted>{phase === 'break' ? t('focusBreak') : t('focusMode')}</Muted>
-      <H1 style={{ fontSize: theme.width >= 900 ? 72 : 56, textAlign: 'center' }}>
+      <H1 style={{ fontSize: theme.width >= 900 ? 72 : 56, lineHeight: theme.width >= 900 ? 84 : 66, textAlign: 'center' }}>
         {mm}:{ss}
       </H1>
       <Body center>{t('focusLead')}</Body>
