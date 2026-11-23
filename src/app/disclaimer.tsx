@@ -6,9 +6,11 @@ import { Badge, Body, Button, Card, H1, H2, Muted, Row, Screen } from '../compon
 import { aiOptionalServiceDown } from '../lib/flags';
 import { useI18n } from '../lib/i18n';
 import { appStore } from '../lib/store';
+import { useTheme } from '../theme-context';
 
 export default function Disclaimer() {
   const { t } = useI18n();
+  const theme = useTheme();
   const close = () => {
     appStore.set({ disclaimerSeen: true });
     if (router.canGoBack()) router.back();
@@ -17,7 +19,7 @@ export default function Disclaimer() {
   return (
     <Screen>
       <Row>
-        <Ionicons name="information-circle" size={28} color="#8A5A00" />
+        <Ionicons name="information-circle" size={28} color={theme.palette.warnText} />
         <H1>{t('disclaimerTitle')}</H1>
       </Row>
       <Card>

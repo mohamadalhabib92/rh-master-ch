@@ -5,11 +5,12 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { DisclaimerBanner } from '../../components/Disclaimer';
 import { Badge, Body, Button, Card, EmptyState, H1, H2, Muted, ProgressBar, Row, Screen } from '../../components/ui';
 import { LAWS } from '../../data/laws';
+import { lawSourceLabel } from '../../lib/exam-session';
 import { findModule } from '../../data/modules';
 import type { Question } from '../../data/types';
 import { useI18n } from '../../lib/i18n';
 import { appStore, finishQuiz, recordAnswer } from '../../lib/store';
-import { colors, radius } from '../../theme';
+import { useTheme } from '../../theme-context';
 import { BackBar } from '../../components/BackBar';
 
 function shuffle<T>(arr: T[]): T[] {
@@ -24,6 +25,7 @@ function shuffle<T>(arr: T[]): T[] {
 export default function Quiz() {
   const { id, mode } = useLocalSearchParams<{ id: string; mode?: string }>();
   const { t, lang } = useI18n();
+  const theme = useTheme();
   const m = findModule(id);
   const mistakesMode = mode === 'mistakes';
   const [round, setRound] = useState(0);
@@ -52,7 +54,7 @@ export default function Quiz() {
     return (
       <Screen>
         <BackBar label={t('backToModule')} />
-        <EmptyState icon={<Ionicons name="happy-outline" size={40} color={colors.ok} />} title={t('noMistakes')} />
+        <EmptyState icon={<Ionicons name="happy-outline" size={40} color={theme.palette.ok} />} title={t('noMistakes')} />
       </Screen>
     );
   }
@@ -71,7 +73,7 @@ export default function Quiz() {
       <Screen>
         <BackBar label={t('backToModule')} />
         <Card style={{ alignItems: 'center', paddingVertical: 32 }}>
-          <Ionicons name={pct >= 80 ? 'trophy' : pct >= 50 ? 'ribbon-outline' : 'school-outline'} size={48} color={pct >= 80 ? '#C9A227' : colors.primary} />
+          <Ionicons name={pct >= 80 ? 'trophy' : pct >= 50 ? 'ribbon-outline' : 'school-outline'} size={48} color={pct >= 80 ? '#C9A227' : theme.palette.primary} />
           <H1>{pct} %</H1>
           <Body>{t('score', { n: score, t: deck.length })}</Body>
           <Row style={{ marginTop: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -95,6 +97,7 @@ export default function Quiz() {
     if (isOk) setScore((x) => x + 1);
     recordAnswer(m.id, q.id, isOk);
   };
+  const namedSource = lawSourceLabel(q.law, LAWS, q.source);
   const next = () => {
     if (idx + 1 >= deck.length) {
       const finalPct = Math.round((score / deck.length) * 100);
@@ -126,32 +129,45 @@ export default function Quiz() {
             <Pressable
               key={oi}
               accessibilityRole="radio"
+              accessibilityLabel={text.o[oi]}
               accessibilityState={{ checked: chosen, disabled: checked }}
               disabled={checked}
               onPress={() => setSel(oi)}
-              style={[styles.opt, chosen && styles.optSel, right && styles.optOk, wrong && styles.optBad]}
+              style={[
+                styles.opt,
+                {
+                  borderColor: theme.palette.border,
+                  backgroundColor: theme.glass.translucent ? theme.glass.surface : theme.palette.surface,
+                  borderRadius: theme.radius.md,
+                  borderTopColor: theme.glass.highlight,
+                },
+                chosen && { borderColor: theme.palette.primary, backgroundColor: theme.palette.primarySoft },
+                right && { borderColor: theme.palette.ok, backgroundColor: theme.palette.okSoft },
+                wrong && { borderColor: theme.palette.danger, backgroundColor: theme.palette.dangerSoft },
+              ]}
             >
               <Ionicons
                 name={right ? 'checkmark-circle' : wrong ? 'close-circle' : chosen ? 'radio-button-on' : 'radio-button-off'}
                 size={20}
-                color={right ? colors.ok : wrong ? colors.danger : chosen ? colors.primaryText : colors.muted}
+                color={right ? theme.palette.ok : wrong ? theme.palette.danger : chosen ? theme.palette.primaryText : theme.palette.muted}
               />
-              <Text style={styles.optText}>{text.o[oi]}</Text>
+              <Text allowFontScaling maxFontSizeMultiplier={3} style={[styles.optText, { color: theme.palette.text, fontFamily: theme.fontFamily }]}>
+                {text.o[oi]}
+              </Text>
             </Pressable>
           );
         })}
       </View>
       {checked ? (
-        <Card style={{ borderColor: isOk ? colors.ok : colors.danger, borderWidth: 1 }}>
+        <Card style={{ borderColor: isOk ? theme.palette.ok : theme.palette.danger, borderWidth: 1 }}>
           <Row>
             <Badge label={isOk ? t('correct') : t('incorrect')} tone={isOk ? 'ok' : 'warn'} />
           </Row>
           <Body style={{ fontWeight: '700' }}>{t('explanation')}</Body>
           <Body>{text.e}</Body>
           <Muted>
-            {t('reference')} : {q.law} — {LAWS[q.law]?.[lang] ?? LAWS[q.law]?.fr ?? q.source ?? 'YOUR_LEGAL_SOURCE'}
+            {t('reference')} : {namedSource.known ? namedSource.text : t('sourceCheck')}
           </Muted>
-          {q.source?.startsWith('YOUR_') ? <Muted>{t('rateSource')} : {q.source}</Muted> : null}
         </Card>
       ) : null}
       {checked ? (
@@ -165,9 +181,6 @@ export default function Quiz() {
 }
 
 const styles = StyleSheet.create({
-  opt: { flexDirection: 'row', gap: 10, alignItems: 'center', padding: 14, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface },
-  optSel: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
-  optOk: { borderColor: colors.ok, backgroundColor: '#E3F6EA' },
-  optBad: { borderColor: colors.danger, backgroundColor: '#FDECEA' },
-  optText: { flex: 1, fontSize: 15, lineHeight: 21, color: colors.text },
+  opt: { flexDirection: 'row', gap: 10, alignItems: 'center', padding: 14, minHeight: 48, borderWidth: 1.5, borderTopWidth: 1 },
+  optText: { flex: 1, fontSize: 16, lineHeight: 22 },
 });

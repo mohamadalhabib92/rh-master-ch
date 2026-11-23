@@ -1,0 +1,39 @@
+{
+  "contractVersion": 1,
+  "consultedAt": "2026-11-07",
+  "storageKey": "rhmaster:v1",
+  "schemaVersion": 1,
+  "counts": {
+    "modules": 9,
+    "questions": 137,
+    "glossaryTerms": 108,
+    "calculators": ["net", "vac", "ot", "notice", "prot"]
+  },
+  "moduleIds": ["contrat", "temps", "salaire", "vacances", "maladie", "fin", "egalite", "recrutement", "sante"],
+  "validity": {
+    "reviewerStatus": "a_valider",
+    "automaticValidation": false,
+    "legalValidity": "non_etablie",
+    "licence": "non_etablie",
+    "alignment": "non_evalue",
+    "note": "Le code ne peut pas passer une question à valide. Une personne compétente doit relire le fond, la source et la licence. Le titre d'un module ne suffit pas à le rattacher à une compétence HRSE ou au brevet."
+  },
+  "preservation": {
+    "questionIdsFile": "content/question-ids.json",
+    "doNotRenameIds": true,
+    "doNotDropStoredIds": true
+  },
+  "backlog": [
+    {
+      "id": "vacation-activity-rate",
+      "status": "expert_review_pending",
+      "observation": "vacation(4, 12, 50) renvoie 20 jours et ratePct 50. L'argument de taux n'est pas appliqué.",
+      "meaning": "Ambiguïté d'API et d'unité. Ce n'est pas la preuve que le calcul temps plein (semaines × 5 × mois/12) est faux. Les jours de vacances à temps partiel dépendent des jours réellement travaillés dans la semaine. Ne pas diviser tous les jours par deux sans règle sourcée."
+    },
+    {
+      "id": "progress-semantics",
+      "status": "unchanged",
+      "meaning": "recordAnswer ne retire pas un identifiant déjà réussi. Hors de ce contrat : la forme JSON est conservée, le comportement pédagogique n'est pas modifié."
+    }
+  ]
+}

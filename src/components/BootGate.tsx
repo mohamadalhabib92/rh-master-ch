@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Button, H2, Muted, Skeleton } from './ui';
 import { useI18n } from '../lib/i18n';
 import { appStore } from '../lib/store';
-import { colors, space } from '../theme';
+import { useTheme } from '../theme-context';
 
 /**
  * Squelettes pendant la lecture locale, puis repli borné à 8 s.
@@ -13,12 +13,13 @@ import { colors, space } from '../theme';
 export function BootGate({ children }: { children: React.ReactNode }) {
   const phase = appStore.usePhase();
   const { t } = useI18n();
+  const theme = useTheme();
 
   if (phase === 'ready') return <>{children}</>;
 
   if (phase === 'timedOut') {
     return (
-      <View style={styles.screen}>
+      <View style={[styles.screen, { backgroundColor: theme.glass.canvas }]}>
         <View style={styles.box}>
           <H2>{t('bootTimeoutTitle')}</H2>
           <Muted>{t('bootTimeoutText')}</Muted>
@@ -30,7 +31,7 @@ export function BootGate({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <View accessibilityLabel={t('bootSkeletonLabel')} accessibilityRole="progressbar" style={styles.screen}>
+    <View accessibilityLabel={t('bootSkeletonLabel')} accessibilityRole="progressbar" style={[styles.screen, { backgroundColor: theme.glass.canvas }]}>
       <View style={styles.box}>
         <Skeleton height={132} />
         <Skeleton height={44} />
@@ -43,6 +44,6 @@ export function BootGate({ children }: { children: React.ReactNode }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', padding: space.lg, paddingTop: 48 },
-  box: { width: '100%', maxWidth: 760, gap: space.md },
+  screen: { flex: 1, alignItems: 'center', padding: 16, paddingTop: 48 },
+  box: { width: '100%', maxWidth: 760, gap: 12 },
 });

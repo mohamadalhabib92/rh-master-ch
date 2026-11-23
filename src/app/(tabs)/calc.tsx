@@ -6,18 +6,22 @@ import { Field } from '../../components/Field';
 import { Badge, Body, Card, Chip, H1, H2, H3, Muted, Row, Screen } from '../../components/ui';
 import { chf, formatChDate, fmtDate, net, noticeEnd, overtime, parseDate, parseNum, protectionDays, RATE_PARAMS, rateById, seniorityYears, vacation, type RateParam } from '../../lib/calc';
 import { useI18n } from '../../lib/i18n';
-import { colors, hit, radius } from '../../theme';
+import { hit, radius } from '../../theme';
+import { useTheme } from '../../theme-context';
 
 type Tab = 'net' | 'vac' | 'ot' | 'notice' | 'prot';
 
 function Result({ children }: { children: React.ReactNode }) {
   const { t } = useI18n();
+  const theme = useTheme();
   return (
-    <View style={styles.result}>
+    <View style={[styles.result, { backgroundColor: theme.palette.surfaceAlt, borderRadius: radius.md }]}>
       {children}
       <Row gap={6}>
-        <Ionicons name="warning-outline" size={14} color="#8A5A00" />
-        <Text style={styles.warn}>{t('calcDisclaimer')}</Text>
+        <Ionicons name="warning-outline" size={14} color={theme.palette.warnText} />
+        <Text allowFontScaling style={[styles.warn, { color: theme.palette.warnText }]}>
+          {t('calcDisclaimer')}
+        </Text>
       </Row>
     </View>
   );
@@ -59,6 +63,7 @@ function formatParam(p: RateParam, missing: string): string {
 
 function RateParams() {
   const { t } = useI18n();
+  const theme = useTheme();
   return (
     <Card>
       <H2>{t('rateParamsTitle')}</H2>
@@ -68,7 +73,7 @@ function RateParams() {
         const label = labelKey ? t(labelKey) : p.id;
         const sourced = p.status === 'a_confirmer' && p.value !== null;
         return (
-          <View key={p.id} style={styles.param}>
+          <View key={p.id} style={[styles.param, { borderColor: theme.palette.border }]}>
             <Row style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <Body style={{ flex: 1 }}>{label}</Body>
               <Badge label={sourced ? t('statusToConfirm') : t('statusToValidate')} tone="warn" />
@@ -81,8 +86,10 @@ function RateParams() {
             {p.kind === 'employer' ? <Muted>{t('rateEmployerNote')}</Muted> : null}
             {p.kind === 'threshold' ? <Muted>{t('rateThresholdNote')}</Muted> : null}
             {p.sourceUrl.startsWith('http') ? (
-              <Pressable accessibilityRole="link" onPress={() => Linking.openURL(p.sourceUrl).catch(() => undefined)}>
-                <Text style={styles.link}>{p.sourceUrl}</Text>
+              <Pressable accessibilityRole="link" accessibilityLabel={p.sourceUrl} onPress={() => Linking.openURL(p.sourceUrl).catch(() => undefined)} style={{ minHeight: 44, justifyContent: 'center' }}>
+                <Text allowFontScaling style={[styles.link, { color: theme.palette.accent }]}>
+                  {p.sourceUrl}
+                </Text>
               </Pressable>
             ) : null}
           </View>
@@ -259,6 +266,7 @@ function ProtCalc() {
 
 export default function Calc() {
   const { t } = useI18n();
+  const theme = useTheme();
   const [tab, setTab] = useState<Tab>('net');
   const tabs: { k: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
     { k: 'net', label: t('netCalc'), icon: 'cash-outline' },
@@ -274,9 +282,24 @@ export default function Calc() {
       <RateParams />
       <View style={styles.tabs}>
         {tabs.map((x) => (
-          <Pressable key={x.k} accessibilityRole="tab" accessibilityState={{ selected: tab === x.k }} onPress={() => setTab(x.k)} style={[styles.tab, tab === x.k && styles.tabOn]}>
-            <Ionicons name={x.icon} size={16} color={tab === x.k ? '#fff' : colors.primaryText} />
-            <Text style={[styles.tabText, tab === x.k && { color: '#fff' }]} numberOfLines={1}>
+          <Pressable
+            key={x.k}
+            accessibilityRole="tab"
+            accessibilityLabel={x.label}
+            accessibilityState={{ selected: tab === x.k }}
+            onPress={() => setTab(x.k)}
+            style={[
+              styles.tab,
+              {
+                borderColor: theme.palette.primary,
+                backgroundColor: tab === x.k ? theme.palette.primary : theme.glass.translucent ? theme.glass.surface : theme.palette.surface,
+                borderTopColor: tab === x.k ? 'rgba(255,255,255,0.45)' : theme.glass.highlight,
+                borderBottomColor: theme.glass.lip,
+              },
+            ]}
+          >
+            <Ionicons name={x.icon} size={16} color={tab === x.k ? theme.palette.onPrimary : theme.palette.primaryText} />
+            <Text allowFontScaling maxFontSizeMultiplier={2} style={[styles.tabText, { color: tab === x.k ? theme.palette.onPrimary : theme.palette.primaryText }]} numberOfLines={1}>
               {x.label}
             </Text>
           </Pressable>
@@ -289,12 +312,11 @@ export default function Calc() {
 
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  result: { backgroundColor: colors.surfaceAlt, borderRadius: radius.md, padding: 14, gap: 6, marginTop: 4 },
-  warn: { flex: 1, fontSize: 12, color: '#8A5A00', fontWeight: '600' },
+  result: { padding: 14, gap: 6, marginTop: 4 },
+  warn: { flex: 1, fontSize: 13, fontWeight: '600' },
   tabs: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  tab: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, minHeight: hit, borderRadius: 999, borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.surface, maxWidth: '100%' },
-  tabOn: { backgroundColor: colors.primary },
-  tabText: { fontSize: 13, fontWeight: '600', color: colors.primaryText, flexShrink: 1 },
-  param: { gap: 2, paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
-  link: { fontSize: 13, color: colors.accent, textDecorationLine: 'underline' },
+  tab: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, minHeight: hit, borderRadius: 999, borderWidth: 1, borderTopWidth: 1, borderBottomWidth: 2, maxWidth: '100%' },
+  tabText: { fontSize: 13, fontWeight: '700', flexShrink: 1 },
+  param: { gap: 2, paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth },
+  link: { fontSize: 13, textDecorationLine: 'underline' },
 });
