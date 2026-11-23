@@ -4,6 +4,7 @@ import { BackBar } from '../../components/BackBar';
 import { Explain, PracticeItem } from '../../components/Practice';
 import { Body, Button, EmptyState, H1, Muted, ProgressBar, Screen } from '../../components/ui';
 import { findDrill } from '../../curriculum/catalog';
+import { knownSourceLabel } from '../../lib/exam-session';
 import { saveAnswer, saveDrill } from '../../lib/learn-actions';
 import { useI18n } from '../../lib/i18n';
 
@@ -23,6 +24,7 @@ export default function DrillScreen() {
     );
   }
   const item = drill.items[index];
+  const source = knownSourceLabel(drill.source?.name);
   const finished = index >= drill.items.length;
   return (
     <Screen>
@@ -30,6 +32,9 @@ export default function DrillScreen() {
       <H1>{drill.title}</H1>
       <Muted>{drill.de.title}</Muted>
       <ProgressBar value={index / drill.items.length} />
+      <Muted>
+        {t('reference')} : {source.known ? source.text : t('sourceCheck')}
+      </Muted>
       {finished ? (
         <>
           <Body>

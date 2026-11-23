@@ -5,6 +5,7 @@ import { BackBar } from '../../components/BackBar';
 import { Body, Button, Card, EmptyState, H1, H2, Muted, Row, Screen } from '../../components/ui';
 import { findCase } from '../../curriculum/catalog';
 import { scoreRubric } from '../../curriculum/plan';
+import { knownSourceLabel } from '../../lib/exam-session';
 import { saveCase } from '../../lib/learn-actions';
 import { useI18n } from '../../lib/i18n';
 import { useTheme } from '../../theme-context';
@@ -26,6 +27,7 @@ export default function CaseScreen() {
     );
   }
   const scored = scoreRubric(item.rubric.map((row) => ({ points: row.points, hit: !!hits[row.id] })));
+  const source = knownSourceLabel(item.source?.name);
   return (
     <Screen>
       <BackBar label={t('tabLearn')} />
@@ -33,6 +35,9 @@ export default function CaseScreen() {
         {item.minutes} min · {item.de.title}
       </Muted>
       <H1>{item.title}</H1>
+      <Muted>
+        {t('reference')} : {source.known ? source.text : t('sourceCheck')}
+      </Muted>
       <Card>
         <Body>{item.prompt}</Body>
       </Card>

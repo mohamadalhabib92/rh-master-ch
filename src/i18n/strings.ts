@@ -214,8 +214,15 @@ const fr = {
   gradeGood: 'Bien',
   gradeEasy: 'Facile',
   mockLeft: '{n} min',
+  mockClock: '{clock}',
   mockSubmit: 'Rendre',
   mockTimeUp: 'Le temps est écoulé. Voici ce qui était répondu.',
+  mockFlag: 'Marquer pour la relecture',
+  mockUnflag: 'Retirer la marque',
+  mockReview: 'Relecture',
+  mockUnanswered: 'Sans réponse',
+  mockFlagBadge: 'À revoir',
+  sourceCheck: 'à vérifier',
   caseRubric: 'Coche ce que ta réponse couvre, puis lis le corrigé.',
   caseShow: 'Voir le corrigé',
   noteLabel: 'Note d’entraînement {n}',
@@ -438,6 +445,13 @@ const de: Partial<Dict> = {
   rateFamily: 'Familienzulagen',
   rateLppAge: 'BVG-Satz nach Alter',
   verreSystem: 'Glas folgt dem System: «Transparenz reduzieren» macht die Flächen deckend, «Bewegung reduzieren» nimmt die Animation. Der Text bleibt in beiden Modi lesbar.',
+  mockClock: '{clock}',
+  mockFlag: 'Zum Nachschauen markieren',
+  mockUnflag: 'Markierung entfernen',
+  mockReview: 'Durchsicht',
+  mockUnanswered: 'Ohne Antwort',
+  mockFlagBadge: 'Nachschauen',
+  sourceCheck: 'zu prüfen',
 };
 
 const it: Partial<Dict> = {
@@ -611,6 +625,13 @@ const it: Partial<Dict> = {
   rateFamily: 'Assegni familiari',
   rateLppAge: 'Aliquota LPP secondo l’età',
   verreSystem: 'Il vetro segue il sistema: «Riduci la trasparenza» rende le superfici opache, «Riduci il movimento» toglie l’animazione. Il testo resta leggibile nei due modi.',
+  mockClock: '{clock}',
+  mockFlag: 'Segna da rivedere',
+  mockUnflag: 'Togli il segno',
+  mockReview: 'Rilettura',
+  mockUnanswered: 'Senza risposta',
+  mockFlagBadge: 'Da rivedere',
+  sourceCheck: 'da verificare',
 };
 
 const en: Partial<Dict> = {
@@ -784,6 +805,13 @@ const en: Partial<Dict> = {
   rateFamily: 'Family allowances',
   rateLppAge: 'Occupational pension rate by age',
   verreSystem: 'Glass follows the system: Reduce Transparency makes surfaces opaque, and Reduce Motion removes animation. Text stays readable in both modes.',
+  mockClock: '{clock}',
+  mockFlag: 'Flag for review',
+  mockUnflag: 'Remove flag',
+  mockReview: 'Review',
+  mockUnanswered: 'Unanswered',
+  mockFlagBadge: 'Flagged',
+  sourceCheck: 'to be checked',
 };
 
 export const dictionaries: Record<Lang, Partial<Dict>> & { fr: Dict } = { fr, de, it, en };

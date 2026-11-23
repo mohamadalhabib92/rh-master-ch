@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { DisclaimerBanner } from '../../components/Disclaimer';
 import { Badge, Body, Button, Card, EmptyState, H1, H2, Muted, ProgressBar, Row, Screen } from '../../components/ui';
 import { LAWS } from '../../data/laws';
+import { lawSourceLabel } from '../../lib/exam-session';
 import { findModule } from '../../data/modules';
 import type { Question } from '../../data/types';
 import { useI18n } from '../../lib/i18n';
@@ -96,6 +97,7 @@ export default function Quiz() {
     if (isOk) setScore((x) => x + 1);
     recordAnswer(m.id, q.id, isOk);
   };
+  const namedSource = lawSourceLabel(q.law, LAWS, q.source);
   const next = () => {
     if (idx + 1 >= deck.length) {
       const finalPct = Math.round((score / deck.length) * 100);
@@ -164,9 +166,8 @@ export default function Quiz() {
           <Body style={{ fontWeight: '700' }}>{t('explanation')}</Body>
           <Body>{text.e}</Body>
           <Muted>
-            {t('reference')} : {q.law} — {LAWS[q.law]?.[lang] ?? LAWS[q.law]?.fr ?? q.source ?? 'YOUR_LEGAL_SOURCE'}
+            {t('reference')} : {namedSource.known ? namedSource.text : t('sourceCheck')}
           </Muted>
-          {q.source?.startsWith('YOUR_') ? <Muted>{t('rateSource')} : {q.source}</Muted> : null}
         </Card>
       ) : null}
       {checked ? (
