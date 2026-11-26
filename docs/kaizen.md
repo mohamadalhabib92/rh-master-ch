@@ -35,3 +35,15 @@ Après : l’horloge est `mm:ss`, en titre, et passe à la couleur danger dans l
 Fichiers : `src/app/mock/[id].tsx`, `src/lib/exam-session.ts`.
 
 Tests : `src/lib/exam-session.test.ts` (`formatClock`).
+
+## 2026-11-26
+
+Demande : un module compact de comptabilité suisse pour les métiers RH, sur une branche à part, sans fusion dans `main`. Ce n’est pas un sujet officiel et l’app ne délivre aucun titre.
+
+Avant : le parcours couvrait le droit du travail, la paie et les assurances, sans leçons d’écritures comptables.
+
+Après : compétence « Comptabilité suisse », six leçons (obligation CO art. 957 ss, bilan et compte de résultat, plan PME classes 1 à 9, partie double, TVA 8,1 / 2,6 / 3,8 et méthode effective, salaires, bouclement), six cartes, 44 questions (QCM, vrai/faux, ordre, écritures chiffrées) et un blanc de huit questions sur le minuteur déjà en place. Les taux 2026 d’AVS/AI/APG et d’AC sont ceux des fiches existantes. Le reste sans taux fédéral unique est marqué « à vérifier ».
+
+Fichiers : `src/curriculum/accounting-math.ts`, `src/curriculum/accounting-content.ts`, `src/curriculum/catalog.ts`, `src/app/(tabs)/learn.tsx`.
+
+Tests : `src/curriculum/accounting-math.test.ts`, `src/curriculum/accounting-content.test.ts` (une seule bonne réponse, explications non vides, montants et écritures équilibrées). La clé `rhmaster:v1` n’est pas modifiée.

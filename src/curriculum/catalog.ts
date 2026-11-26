@@ -1,3 +1,11 @@
+import {
+  accountingCards,
+  accountingCompetence,
+  accountingDrills,
+  accountingExams,
+  accountingFigures,
+  accountingLessons,
+} from './accounting-content';
 import { FIGURES } from './figures-data';
 import type { CardItem, CaseStudy, Catalog, Competence, Drill, ExamSim, Lesson, SourceRef } from './types';
 
@@ -286,13 +294,13 @@ export const catalog: Catalog = {
   consultedAt: DAY,
   localePrimary: 'fr',
   german: 'structure_ready',
-  figures: FIGURES,
-  competences,
-  lessons,
-  cards,
-  drills,
+  figures: [...FIGURES, ...accountingFigures],
+  competences: [...competences, accountingCompetence],
+  lessons: [...lessons, ...accountingLessons],
+  cards: [...cards, ...accountingCards],
+  drills: [...drills, ...accountingDrills],
   cases,
-  exams,
+  exams: [...exams, ...accountingExams],
 };
 
 export function findCompetence(id: string) {

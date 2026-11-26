@@ -122,6 +122,11 @@ export default function Learn() {
       {catalog.exams.map((exam) => (
         <Button key={exam.id} variant="secondary" label={exam.title} onPress={() => router.push(`/mock/${exam.id}`)} />
       ))}
+      {catalog.drills
+        .filter((item) => item.competenceId === 'compta')
+        .map((item) => (
+          <Button key={item.id} variant="ghost" label={item.title} onPress={() => router.push(`/drill/${item.id}`)} />
+        ))}
       {catalog.cases.map((item) => (
         <Button key={item.id} variant="ghost" label={item.title} onPress={() => router.push(`/case/${item.id}`)} />
       ))}
